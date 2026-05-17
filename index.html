@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLZ的个人空间</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #6C5CE7;
+    --secondary: #a855f7;
+    --accent: #ec4899;
+    --cyan: #06b6d4;
+    --blue: #3b82f6;
+    --bg: #0a0a1a;
+    --card-bg: rgba(255,255,255,0.04);
+    --card-border: rgba(255,255,255,0.08);
+    --text: #ffffff;
+    --text-secondary: rgba(255,255,255,0.6);
+    --radius: 20px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  #particle-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .gradient-bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(108,92,231,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(168,85,247,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(236,72,153,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.08) 0%, transparent 50%);
+    animation: gradientShift 12s ease-in-out infinite alternate;
+  }
+
+  @keyframes gradientShift {
+    0% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.2) rotate(2deg); }
+    100% { transform: scale(1) rotate(-2deg); }
+  }
+
+  .page {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 1;
+    display: none;
+    opacity: 0;
+    overflow-y: auto;
+    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateY(30px) scale(0.98);
+  }
+
+  .page.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .page.exit {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.98);
+  }
+
+  .page::-webkit-scrollbar { width: 6px; }
+  .page::-webkit-scrollbar-track { background: transparent; }
+  .page::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
+  #home {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  #home.active { display: flex; }
+
+  .hero { text-align: center; margin-bottom: 4rem; }
+
+  .hero-badge {
+    display: inline-block;
+    padding: 6px 18px;
+    border-radius: 100px;
+    background: linear-gradient(135deg, rgba(108,92,231,0.2), rgba(236,72,153,0.2));
+    border: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    animation: fadeInUp 0.8s ease;
+  }
+
+  .hero h1 {
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #fff 0%, #a78bfa 30%, #f472b6 70%, #22d3ee 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: fadeInUp 0.8s ease 0.1s both;
+  }
+
+  .hero .typing-wrapper {
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    color: var(--text-secondary);
+    min-height: 2em;
+    animation: fadeInUp 0.8s ease 0.2s both;
+  }
+
+  .typing-wrapper .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1.2em;
+    background: var(--secondary);
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom;
+  }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  .hero-sub {
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    animation: fadeInUp 0.8s ease 0.3s both;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    max-width: 1100px;
+    width: 100%;
+    padding: 0 1rem;
+    animation: fadeInUp 0.8s ease 0.4s both;
+  }
+
+  @media (max-width: 900px) { .cards-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; } }
+  @media (max-width: 500px) { .cards-grid { grid-template-columns: 1fr; gap: 1rem; } }
+
+  .module-card {
+    position: relative;
+    padding: 2.5rem 1.5rem;
+    border-radius: var(--radius);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    cursor: pointer;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    text-align: center;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .module-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--grad-1), var(--grad-2));
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: -1;
+  }
+
+  .module-card:hover::before { opacity: 0.12; }
+  .module-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-8px) scale(1.02); box-shadow: 0 20px 60px rgba(108,92,231,0.15), 0 0 40px rgba(168,85,247,0.08); }
+  .module-card:active { transform: translateY(-2px) scale(0.98); }
+  .card-icon { font-size: 2.8rem; margin-bottom: 1.2rem; display: block; transition: transform 0.5s ease; }
+  .module-card:hover .card-icon { transform: scale(1.2) rotate(-5deg); }
+
+  .module-card h3 {
+    font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--grad-1), var(--grad-2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .module-card p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+
+  .card-glow {
+    position: absolute;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--glow-color), transparent 70%);
+    opacity: 0; transition: opacity 0.5s ease;
+    pointer-events: none; transform: translate(-50%, -50%);
+  }
+
+  .module-card:hover .card-glow { opacity: 0.6; }
+
+  /* ===== Subpage ===== */
+  .subpage { padding: 0; }
+
+  .subpage-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 6rem 2rem 4rem;
+    min-height: 100vh;
+  }
+
+  .back-btn {
+    position: fixed;
+    top: 1.5rem; left: 1.5rem;
+    z-index: 100;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(12px);
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+
+  .back-btn:hover { background: rgba(255,255,255,0.12); transform: scale(1.1); }
+
+  .subpage-header { margin-bottom: 3rem; animation: fadeInUp 0.6s ease; }
+
+  .subpage-header h2 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    margin-bottom: 0.8rem;
+    background: linear-gradient(135deg, var(--page-grad-1), var(--page-grad-2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .subpage-header p { font-size: 1.05rem; color: var(--text-secondary); line-height: 1.8; }
+  .subpage-content { animation: fadeInUp 0.6s ease 0.15s both; }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== Personal ===== */
+  .profile-section {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 600px) { .profile-section { grid-template-columns: 1fr; text-align: center; } }
+
+  .avatar-frame {
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    padding: 4px;
+    animation: avatarPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes avatarPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(108,92,231,0.4); }
+    50% { box-shadow: 0 0 0 20px rgba(108,92,231,0); }
+  }
+
+  .avatar-placeholder {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: var(--primary);
+  }
+
+  .info-list { display: flex; flex-direction: column; gap: 1rem; }
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.8rem 1.2rem;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: all 0.3s ease;
+  }
+
+  .info-item:hover { background: rgba(255,255,255,0.06); transform: translateX(6px); }
+  .info-item .label { color: var(--text-secondary); font-size: 0.85rem; min-width: 60px; }
+  .info-item .value { color: #fff; font-size: 0.95rem; }
+
+  .skill-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.5rem; }
+
+  .skill-tag {
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    background: rgba(108,92,231,0.15);
+    border: 1px solid rgba(108,92,231,0.2);
+    color: #a78bfa;
+    transition: all 0.3s ease;
+  }
+
+  .skill-tag:hover { background: rgba(108,92,231,0.25); transform: translateY(-2px); }
+
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    margin: 2.5rem 0;
+  }
+
+  /* ===== Projects ===== */
+  .projects-section { margin-top: 0.5rem; }
+
+  .projects-scroll {
+    max-height: 320px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    padding-right: 0.5rem;
+  }
+
+  .projects-scroll::-webkit-scrollbar { width: 4px; }
+  .projects-scroll::-webkit-scrollbar-track { background: transparent; }
+  .projects-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+  .project-card {
+    padding: 1.2rem 1.5rem;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .project-card:hover { background: rgba(255,255,255,0.05); transform: translateX(4px); border-color: rgba(108,92,231,0.2); }
+  .project-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.3rem; color: #c4b5fd; }
+  .project-meta { font-size: 0.78rem; color: rgba(255,255,255,0.3); margin-bottom: 0.4rem; }
+  .project-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+
+  .add-btn {
+    padding: 7px 18px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.82rem;
+    font-family: inherit;
+  }
+
+  .add-btn:hover {
+    background: rgba(108,92,231,0.15);
+    border-color: rgba(108,92,231,0.3);
+    color: #c4b5fd;
+    transform: scale(1.03);
+  }
+
+  /* ===== Album Masonry ===== */
+  .album-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 4px 10px 0;
+  }
+
+  .subpage-content.album-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+    height: calc(100vh - 14rem);
+  }
+
+  .album-scroll::-webkit-scrollbar { width: 4px; }
+  .album-scroll::-webkit-scrollbar-track { background: transparent; }
+  .album-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+  .album-masonry {
+    column-count: 3;
+    column-gap: 1rem;
+    padding-bottom: 0.5rem;
+  }
+
+  @media (max-width: 700px) { .album-masonry { column-count: 2; } }
+  @media (max-width: 450px) { .album-masonry { column-count: 1; } }
+
+  .masonry-item {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .masonry-item:hover {
+    border-color: rgba(255,255,255,0.15);
+    transform: scale(1.02);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+
+  .masonry-emoji { font-size: 2rem; }
+
+  /* ===== AIGC ===== */
+  .aigc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .aigc-card {
+    padding: 1.8rem;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: all 0.4s ease;
+    cursor: pointer;
+  }
+
+  .aigc-card:hover { transform: translateY(-4px); border-color: rgba(6,182,212,0.3); box-shadow: 0 12px 40px rgba(6,182,212,0.08); }
+  .aigc-card h4 { margin-bottom: 0.5rem; font-size: 1.05rem; }
+  .aigc-card p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.7; }
+
+  .aigc-subpage {
+    display: none;
+    animation: fadeInUp 0.5s ease;
+  }
+
+  .aigc-subpage.active { display: block; }
+
+  .aigc-sub-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .aigc-sub-header h3 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--secondary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ===== vibe Coding ===== */
+  .vibe-list { display: flex; flex-direction: column; gap: 1rem; }
+
+  .vibe-item {
+    padding: 1.5rem;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: all 0.4s ease;
+  }
+
+  .vibe-item:hover { background: rgba(255,255,255,0.06); transform: translateX(6px); border-color: rgba(236,72,153,0.3); }
+  .vibe-item h4 { font-size: 1.05rem; margin-bottom: 0.3rem; }
+  .vibe-item .meta { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+  .vibe-item p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; }
+
+  .vibe-footer {
+    text-align: center;
+    margin-top: 3rem;
+    padding: 2rem 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .vibe-footer-text {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 2px;
+  }
+
+  .vibe-footer-sub {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.15);
+    margin-top: 0.5rem;
+  }
+
+  /* ===== Game Button ===== */
+  .game-btn {
+    position: fixed;
+    bottom: 30px; left: 30px;
+    z-index: 200;
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border: none;
+    color: #fff;
+    font-size: 1.3rem;
+    cursor: pointer;
+    box-shadow: 0 4px 24px rgba(108,92,231,0.4);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: gameBtnPulse 2s ease-in-out infinite;
+  }
+
+  .game-btn:hover { transform: scale(1.12); box-shadow: 0 6px 36px rgba(108,92,231,0.6); animation: none; }
+
+  @keyframes gameBtnPulse {
+    0%, 100% { box-shadow: 0 4px 24px rgba(108,92,231,0.4); }
+    50% { box-shadow: 0 4px 40px rgba(108,92,231,0.7); }
+  }
+
+  .game-btn-label {
+    position: fixed;
+    bottom: 42px; left: 100px;
+    z-index: 200;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.3);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .game-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .game-modal.active { display: flex; }
+
+  .game-modal-content {
+    position: relative;
+    width: min(740px, 92vw);
+    height: min(620px, 86vh);
+    background: rgba(16,16,36,0.96);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  }
+
+  .game-modal-close {
+    position: absolute;
+    top: 0.75rem; right: 0.75rem;
+    z-index: 10;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+  }
+
+  .game-modal-close:hover { background: rgba(255,255,255,0.1); transform: scale(1.1); }
+
+  .game-tabs { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-shrink: 0; }
+
+  .game-tab {
+    padding: 7px 18px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.82rem;
+    font-family: inherit;
+  }
+
+  .game-tab:hover { border-color: rgba(255,255,255,0.15); color: #fff; }
+  .game-tab.active { background: rgba(108,92,231,0.2); border-color: var(--primary); color: #fff; }
+  .game-score { font-size: 0.85rem; color: var(--text-secondary); text-align: center; flex-shrink: 0; margin-bottom: 0.5rem; }
+
+  .game-canvas-wrap {
+    flex: 1;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #0d0d24;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+  }
+
+  .game-canvas-wrap canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+  .game-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.65);
+    gap: 1rem;
+    border-radius: 16px;
+  }
+
+  .game-overlay .btn-row { display: flex; gap: 0.8rem; align-items: center; }
+  .game-overlay button {
+    padding: 10px 28px; border-radius: 8px; border: none;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: #fff; font-size: 0.95rem; cursor: pointer;
+    transition: all 0.3s ease; font-family: inherit;
+  }
+
+  .game-overlay button:hover { transform: scale(1.06); box-shadow: 0 6px 24px rgba(108,92,231,0.4); }
+  .game-overlay .tips-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); }
+  .game-overlay .tips-btn:hover { background: rgba(255,255,255,0.12); box-shadow: none; }
+
+  .game-tips-panel {
+    margin-top: 0.8rem;
+    padding: 0.8rem 1.2rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    max-width: 320px;
+    display: none;
+  }
+
+  .game-tips-panel.show { display: block; }
+
+  .game-tips-panel kbd {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    font-family: inherit;
+    font-size: 0.78rem;
+    color: #fff;
+  }
+
+  .game-overlay.hidden { display: none; }
+
+  .game-overlay h3 {
+    font-size: 1.4rem;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .game-overlay p { color: var(--text-secondary); font-size: 0.9rem; }
+  .game-controls-hint { font-size: 0.72rem; color: rgba(255,255,255,0.2); text-align: center; flex-shrink: 0; margin-top: 0.3rem; }
+
+  @media (max-width: 768px) {
+    .subpage-inner { padding: 5rem 1.2rem 3rem; }
+    .profile-section { grid-template-columns: 1fr; }
+    .avatar-frame { margin: 0 auto; }
+    .game-btn { width: 50px; height: 50px; font-size: 1.1rem; bottom: 20px; left: 20px; }
+    .game-btn-label { display: none; }
+    .game-modal-content { padding: 1rem; width: 96vw; height: 90vh; }
+    .game-tab { padding: 5px 12px; font-size: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="gradient-bg"></div>
+<canvas id="particle-canvas"></canvas>
+
+<!-- ===== HOME ===== -->
+<div id="home" class="page active">
+  <div class="hero">
+    <div class="hero-badge">✦ LLZ的个人空间</div>
+    <h1>探索·创造·分享</h1>
+    <div class="typing-wrapper">
+      <span id="typing-text"></span><span class="cursor"></span>
+    </div>
+    <div class="hero-sub">↓ 选择模块开始探索</div>
+  </div>
+
+  <div class="cards-grid">
+    <div class="module-card" data-page="personal" style="--grad-1:#6C5CE7;--grad-2:#a855f7;--glow-color:rgba(108,92,231,0.6)">
+      <div class="card-glow"></div>
+      <span class="card-icon">👤</span>
+      <h3>个人信息</h3>
+      <p>了解我的背景、技能与经历</p>
+    </div>
+    <div class="module-card" data-page="album" style="--grad-1:#06b6d4;--grad-2:#3b82f6;--glow-color:rgba(6,182,212,0.6)">
+      <div class="card-glow"></div>
+      <span class="card-icon">📸</span>
+      <h3>相册</h3>
+      <p>光影之间，记录美好时刻</p>
+    </div>
+    <div class="module-card" data-page="aigc" style="--grad-1:#a855f7;--grad-2:#ec4899;--glow-color:rgba(168,85,247,0.6)">
+      <div class="card-glow"></div>
+      <span class="card-icon">🤖</span>
+      <h3>AIGC</h3>
+      <p>AI 生成内容与创意探索</p>
+    </div>
+    <div class="module-card" data-page="vibecoding" style="--grad-1:#ec4899;--grad-2:#f59e0b;--glow-color:rgba(236,72,153,0.6)">
+      <div class="card-glow"></div>
+      <span class="card-icon">💻</span>
+      <h3>vibe Coding</h3>
+      <p>沉浸式编程，让代码有温度</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Dynamic Page Loader ===== -->
+<div id="subpage" class="page subpage">
+  <button class="back-btn" onclick="navigateTo('home')">←</button>
+  <div class="subpage-inner" id="pageContent"></div>
+</div>
+
+<!-- ===== Game Button & Modal ===== -->
+<button class="game-btn" id="gameBtn" onclick="toggleGameModal()">🎮</button>
+<span class="game-btn-label">小游戏</span>
+
+<div class="game-modal" id="gameModal">
+  <div class="game-modal-content">
+    <button class="game-modal-close" onclick="toggleGameModal()">✕</button>
+    <div class="game-tabs">
+      <button class="game-tab active" data-game="snake" onclick="switchGame('snake')">🐍 贪吃蛇</button>
+      <button class="game-tab" data-game="flappy" onclick="switchGame('flappy')">🐦 像素鸟</button>
+      <button class="game-tab" data-game="breakout" onclick="switchGame('breakout')">🧱 打砖块</button>
+    </div>
+    <div class="game-score" id="gameScore">得分: 0</div>
+    <div class="game-canvas-wrap" id="gameCanvasWrap">
+      <canvas id="gameCanvas"></canvas>
+      <div class="game-overlay" id="gameOverlay">
+        <h3 id="gameOverlayTitle">🐍 贪吃蛇</h3>
+        <p id="gameOverlayDesc">使用方向键控制蛇移动</p>
+        <div class="btn-row">
+          <button id="gameStartBtn" onclick="startCurrentGame()">开始游戏</button>
+          <button class="tips-btn" onclick="toggleTips()">💡 查看提示</button>
+        </div>
+        <div class="game-tips-panel" id="gameTipsPanel">
+          <div id="gameTipsContent">使用 <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> 控制方向，吃到红色食物增长身体，撞墙或撞到自己游戏结束。</div>
+        </div>
+      </div>
+    </div>
+    <div class="game-controls-hint" id="gameControlsHint">↑ ↓ ← → 控制方向 | Ctrl：暂停 | 空格：重新开始</div>
+  </div>
+</div>
+
+<script>
+  // ===== Particle System =====
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let mouse = { x: 0, y: 0 };
+  let w, h;
+
+  function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resize);
+  resize();
+  document.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+  class Particle {
+    constructor() { this.reset(); }
+    reset() {
+      this.x = Math.random() * w; this.y = Math.random() * h;
+      this.size = Math.random() * 2 + 0.5;
+      this.speedX = (Math.random() - 0.5) * 0.5;
+      this.speedY = (Math.random() - 0.5) * 0.5;
+      this.opacity = Math.random() * 0.5 + 0.1;
+      this.hue = Math.random() * 60 + 240;
+    }
+    update() {
+      this.x += this.speedX; this.y += this.speedY;
+      const dx = mouse.x - this.x;
+      const dy = mouse.y - this.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 188) {
+        const force = (188 - dist) / 188 * 1.35;
+        this.x += dx / dist * force;
+        this.y += dy / dist * force;
+      }
+      if (this.x < 0 || this.x > w || this.y < 0 || this.y > h) this.reset();
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${this.hue}, 70%, 70%, ${this.opacity})`;
+      ctx.fill();
+    }
+  }
+
+  const particleCount = Math.min(300, Math.floor(w * h / 4000));
+  for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+
+  function drawConnections() {
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          const opacity = (1 - dist / 120) * 0.15;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `hsla(260, 60%, 70%, ${opacity})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function animateParticles() {
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => { p.update(); p.draw(); });
+    drawConnections();
+    requestAnimationFrame(animateParticles);
+  }
+  animateParticles();
+
+  // ===== Typing Effect =====
+  const phrases = ['全栈开发者 · AI 探索者', '用代码构建美好数字世界', 'vibe Coding · 创意无限', '记录成长 · 分享知识'];
+  let phraseIdx = 0, charIdx = 0, isDeleting = false;
+  const typingEl = document.getElementById('typing-text');
+
+  function typeEffect() {
+    const current = phrases[phraseIdx];
+    if (!isDeleting) {
+      typingEl.textContent = current.slice(0, charIdx + 1);
+      charIdx++;
+      if (charIdx === current.length) { isDeleting = true; setTimeout(typeEffect, 2000); return; }
+      setTimeout(typeEffect, 60 + Math.random() * 40);
+    } else {
+      typingEl.textContent = current.slice(0, charIdx - 1);
+      charIdx--;
+      if (charIdx === 0) { isDeleting = false; phraseIdx = (phraseIdx + 1) % phrases.length; setTimeout(typeEffect, 400); return; }
+      setTimeout(typeEffect, 30 + Math.random() * 20);
+    }
+  }
+  setTimeout(typeEffect, 800);
+
+  // ===== 3D Tilt on Cards =====
+  document.querySelectorAll('.module-card').forEach(card => {
+    const glow = card.querySelector('.card-glow');
+    card.addEventListener('mousemove', e => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left, y = e.clientY - rect.top;
+      const cx = rect.width / 2, cy = rect.height / 2;
+      card.style.transform = `perspective(800px) rotateX(${(y - cy) / cy * -8}deg) rotateY(${(x - cx) / cx * 8}deg) translateY(-6px) scale(1.02)`;
+      if (glow) { glow.style.left = x + 'px'; glow.style.top = y + 'px'; glow.style.opacity = '0.5'; }
+    });
+    card.addEventListener('mouseleave', () => { card.style.transform = ''; if (glow) glow.style.opacity = '0'; });
+  });
+
+  // ===== Page Content Store (embedded for file:// compatibility) =====
+  const pageContentStore = {
+    personal: `<div class="subpage-header" style="--page-grad-1:#6C5CE7;--page-grad-2:#a855f7">
+  <h2>👤 个人信息</h2>
+  <p>热爱技术，持续学习，用代码创造价值</p>
+</div>
+<div class="subpage-content">
+  <div class="profile-section">
+    <div class="avatar-frame"><div class="avatar-placeholder">🦸</div></div>
+    <div>
+      <div class="info-list">
+        <div class="info-item"><span class="label">姓名</span><span class="value">林立自</span></div>
+        <div class="info-item"><span class="label">职位</span><span class="value">全栈开发者 / AI 爱好者</span></div>
+        <div class="info-item"><span class="label">地点</span><span class="value">中国 · 成都</span></div>
+        <div class="info-item"><span class="label">邮箱</span><span class="value">linlizi66@163.com</span></div>
+        <div class="info-item"><span class="label">GitHub</span><span class="value">github.com/linlizi</span></div>
+      </div>
+      <div class="skill-tags">
+        <span class="skill-tag">Java</span><span class="skill-tag">Python</span>
+        <span class="skill-tag">MySQL</span><span class="skill-tag">Docker</span>
+        <span class="skill-tag">Vue</span><span class="skill-tag">Redis</span>
+        <span class="skill-tag">Spring Boot</span><span class="skill-tag">AI</span>
+      </div>
+    </div>
+  </div>
+  <div class="section-divider"></div>
+  <div class="projects-section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+      <h3 style="font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">📋 项目经历</h3>
+      <button class="add-btn" onclick="addProject()">＋ 添加项目</button>
+    </div>
+    <div class="projects-scroll" id="projectsContainer">
+      <div class="project-card"><div class="project-title">AI 智能助手平台</div><div class="project-meta">2025.06 - 2026.02</div><div class="project-desc">基于大语言模型构建的智能对话平台，支持多轮对话、知识库检索和插件系统。日活用户超 10 万。</div></div>
+      <div class="project-card"><div class="project-title">开源组件库</div><div class="project-meta">2024.09 - 至今</div><div class="project-desc">一个基于 React 的现代化 UI 组件库，包含 60+ 组件，GitHub 5000+ star，被多个企业项目采用。</div></div>
+      <div class="project-card"><div class="project-title">实时协作白板</div><div class="project-meta">2024.03 - 2024.08</div><div class="project-desc">基于 WebSocket 和 Canvas 的多人实时协作白板应用，支持图形绘制、文字输入和思维导图功能。</div></div>
+    </div>
+  </div>
+</div>`,
+    album: `<div class="subpage-header" style="--page-grad-1:#06b6d4;--page-grad-2:#3b82f6">
+  <h2>📸 相册</h2>
+  <p>用镜头捕捉生活中的每一个精彩瞬间</p>
+</div>
+<div class="subpage-content album-layout">
+  <div style="display:flex;gap:0.8rem;margin-bottom:1.5rem;flex-wrap:wrap">
+    <button class="add-btn" onclick="addAlbumItem('image')">＋ 添加图片</button>
+    <button class="add-btn" onclick="addAlbumItem('video')">＋ 添加视频</button>
+  </div>
+  <div class="album-scroll"><div class="album-masonry" id="albumMasonry">
+    <div class="masonry-item" style="height:180px;background:linear-gradient(135deg,rgba(6,182,212,0.12),rgba(59,130,246,0.08))"><span class="masonry-emoji">🌅</span><span>日落</span></div>
+    <div class="masonry-item" style="height:260px;background:linear-gradient(135deg,rgba(168,85,247,0.12),rgba(236,72,153,0.08))"><span class="masonry-emoji">🏔️</span><span>山川</span></div>
+    <div class="masonry-item" style="height:200px;background:linear-gradient(135deg,rgba(6,182,212,0.10),rgba(59,130,246,0.06))"><span class="masonry-emoji">🌊</span><span>海洋</span></div>
+    <div class="masonry-item" style="height:300px;background:linear-gradient(135deg,rgba(236,72,153,0.12),rgba(245,158,11,0.08))"><span class="masonry-emoji">🌆</span><span>城市</span></div>
+    <div class="masonry-item" style="height:220px;background:linear-gradient(135deg,rgba(168,85,247,0.10),rgba(108,92,231,0.06))"><span class="masonry-emoji">🌸</span><span>花园</span></div>
+    <div class="masonry-item" style="height:170px;background:linear-gradient(135deg,rgba(6,182,212,0.14),rgba(59,130,246,0.10))"><span class="masonry-emoji">🌟</span><span>星空</span></div>
+    <div class="masonry-item" style="height:280px;background:linear-gradient(135deg,rgba(236,72,153,0.10),rgba(168,85,247,0.06))"><span class="masonry-emoji">🍜</span><span>美食</span></div>
+    <div class="masonry-item" style="height:190px;background:linear-gradient(135deg,rgba(108,92,231,0.12),rgba(6,182,212,0.08))"><span class="masonry-emoji">🎭</span><span>艺术</span></div>
+    </div>
+  </div>
+</div>`,
+    aigc: `<div class="subpage-header" style="--page-grad-1:#a855f7;--page-grad-2:#ec4899">
+  <h2>🤖 AIGC</h2>
+  <p>探索 AI 生成内容的无限可能</p>
+</div>
+<div class="subpage-content">
+  <div class="aigc-grid" id="aigcGrid">
+    <div class="aigc-card" data-aigc="painting" onclick="openAigcSub('painting')"><h4>🎨 AI 绘画</h4><p>使用 Stable Diffusion、Midjourney 等工具进行 AI 艺术创作，探索视觉生成的边界。</p></div>
+    <div class="aigc-card" data-aigc="writing" onclick="openAigcSub('writing')"><h4>📝 AI 写作</h4><p>利用大语言模型辅助内容创作，从文案到故事，让灵感更快落地。</p></div>
+    <div class="aigc-card" data-aigc="music" onclick="openAigcSub('music')"><h4>🎵 AI 音乐</h4><p>通过 AI 生成音乐和音效，探索算法与艺术的交汇点。</p></div>
+    <div class="aigc-card" data-aigc="video" onclick="openAigcSub('video')"><h4>🎬 AI 视频</h4><p>使用 AI 视频生成和编辑工具，打造全新的视觉叙事体验。</p></div>
+  </div>
+  <div class="aigc-subpage" id="aigcSubpage">
+    <div class="aigc-sub-header">
+      <button class="back-btn" onclick="closeAigcSub()" style="position:relative;top:0;left:0">←</button>
+      <h3 id="aigcSubTitle">🎨 AI 绘画</h3>
+    </div>
+    <div style="display:flex;gap:0.8rem;margin-bottom:1.2rem;flex-wrap:wrap">
+      <button class="add-btn" onclick="addAigcWork('image')">＋ 添加作品</button>
+    </div>
+    <div class="album-scroll"><div class="album-masonry" id="aigcWorks"></div></div>
+  </div>
+</div>`,
+    vibecoding: `<div class="subpage-header" style="--page-grad-1:#ec4899;--page-grad-2:#f59e0b">
+  <h2>💻 vibe Coding</h2>
+  <p>沉浸式编程体验，让代码成为一种表达</p>
+</div>
+<div class="subpage-content">
+  <div class="vibe-list">
+    <div class="vibe-item"><h4>🎵 代码与音乐</h4><div class="meta">2026 · 编程美学</div><p>在音乐的节奏中编写代码，找到心流状态。推荐 Lo-fi、电子、氛围音乐作为编程背景音。</p></div>
+    <div class="vibe-item"><h4>🌙 深夜编码</h4><div class="meta">2026 · 开发日常</div><p>深夜是最适合编程的时间，安静的环境让思维更加清晰。一杯咖啡，一段代码，一个世界。</p></div>
+    <div class="vibe-item"><h4>🚀 创意项目</h4><div class="meta">2026 · 项目展示</div><p>从 idea 到实现，快速原型开发。用最小的成本验证想法，用最快的速度迭代产品。</p></div>
+    <div class="vibe-item"><h4>🤝 开源贡献</h4><div class="meta">2026 · 社区</div><p>参与开源项目，与全球开发者协作。代码无国界，每一行贡献都在让世界变得更好。</p></div>
+  </div>
+  <div class="vibe-footer">
+    <span class="vibe-footer-text">本网页完全通过 vibe coding 开发</span>
+    <div class="vibe-footer-sub">✨ 用 AI 辅助，让创意更快落地 ✨</div>
+  </div>
+</div>`
+  };
+
+  // ===== Page Loading =====
+  let isNavigating = false;
+
+  function navigateTo(pageId) {
+    if (isNavigating) return;
+    isNavigating = true;
+
+    const current = document.querySelector('.page.active');
+    if (current) { current.classList.remove('active'); current.classList.add('exit'); setTimeout(() => current.classList.remove('exit'), 600); }
+
+    if (pageId === 'home') {
+      const home = document.getElementById('home');
+      setTimeout(() => { home.classList.add('active'); home.scrollTop = 0; isNavigating = false; }, 50);
+    } else {
+      const sub = document.getElementById('subpage');
+      const content = document.getElementById('pageContent');
+
+      if (pageContentStore[pageId]) {
+        content.innerHTML = pageContentStore[pageId];
+        setTimeout(() => { sub.classList.add('active'); sub.scrollTop = 0; }, 50);
+        execPageScripts(content);
+        isNavigating = false;
+      } else {
+        content.innerHTML = '<div style="text-align:center;padding:4rem;color:var(--text-secondary)"><h3>页面不存在</h3></div>';
+        setTimeout(() => { sub.classList.add('active'); sub.scrollTop = 0; }, 50);
+        isNavigating = false;
+      }
+    }
+  }
+
+  function execPageScripts(container) {
+    // Inline onclick handlers already work with globally defined functions
+  }
+
+  // ===== Page-Specific Functions =====
+  function addProject() {
+    const container = document.getElementById('projectsContainer');
+    if (!container) return;
+    const card = document.createElement('div');
+    card.className = 'project-card';
+    card.style.animation = 'fadeInUp 0.4s ease';
+    const num = container.children.length + 1;
+    card.innerHTML = '<div class="project-title">新项目 #' + num + '</div><div class="project-meta">2026 - 至今</div><div class="project-desc">这是一个新添加的项目经历，你可以编辑这段描述文字来介绍你的项目内容、技术栈和成果。</div>';
+    container.appendChild(card);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function addAlbumItem(type) {
+    const container = document.getElementById('albumMasonry');
+    if (!container) return;
+    const heights = [160, 200, 240, 280, 320];
+    const colors = ['rgba(6,182,212,0.12),rgba(59,130,246,0.08)','rgba(168,85,247,0.12),rgba(236,72,153,0.08)','rgba(236,72,153,0.10),rgba(245,158,11,0.08)','rgba(108,92,231,0.12),rgba(6,182,212,0.08)','rgba(59,130,246,0.10),rgba(168,85,247,0.06)'];
+    const h = heights[Math.floor(Math.random() * heights.length)];
+    const c = colors[Math.floor(Math.random() * colors.length)];
+    const emojis = type === 'image' ? ['📷','📸','🎨','🖼️','🌄','🎑'] : ['🎬','📹','🎥','📺','🎞️'];
+    const labels = type === 'image' ? ['新照片','我的作品','精彩瞬间','美好时光'] : ['新视频','我的影片','精彩片段','记录'];
+    const item = document.createElement('div');
+    item.className = 'masonry-item';
+    item.style.height = h + 'px';
+    item.style.background = 'linear-gradient(135deg,' + c + ')';
+    item.style.animation = 'fadeInUp 0.4s ease';
+    item.innerHTML = '<span class="masonry-emoji">' + emojis[Math.floor(Math.random() * emojis.length)] + '</span><span>' + labels[Math.floor(Math.random() * labels.length)] + '</span>';
+    container.appendChild(item);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function openAigcSub(type) {
+    var grid = document.getElementById('aigcGrid');
+    if (!grid) return;
+    var contentDiv = grid.parentElement;
+    var pageHeader = contentDiv && contentDiv.previousElementSibling;
+    var sub = document.getElementById('aigcSubpage');
+    var title = document.getElementById('aigcSubTitle');
+    if (!sub || !title) return;
+    var clickedTitles = { painting: '🎨 我的 AI 绘画作品', writing: '📝 我的 AI 写作作品', music: '🎵 我的 AI 音乐作品', video: '🎬 我的 AI 视频作品' };
+    title.textContent = clickedTitles[type] || 'AIGC';
+
+    if (pageHeader && pageHeader.classList.contains('subpage-header')) {
+      pageHeader.style.transition = 'opacity 0.4s ease';
+      pageHeader.style.opacity = '0';
+    }
+
+    grid.querySelectorAll('.aigc-card').forEach(function(c) {
+      c.style.transition = 'none';
+    });
+
+    var gridRect = grid.getBoundingClientRect();
+    var targetLeft = gridRect.left + 1;
+    var targetTop = gridRect.top + 1;
+
+    grid.querySelectorAll('.aigc-card').forEach(function(c) {
+      if (c.dataset.aigc === type) {
+        var r = c.getBoundingClientRect();
+        var dx = targetLeft - r.left;
+        var dy = targetTop - r.top;
+        void c.offsetHeight;
+        c.style.transition = 'all 0.6s cubic-bezier(0.16,1,0.3,1)';
+        c.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+        c.style.opacity = '1';
+        c.style.zIndex = '10';
+        c.style.position = 'relative';
+      } else {
+        void c.offsetHeight;
+        c.style.transition = 'opacity 0.4s ease';
+        c.style.opacity = '0';
+        c.style.pointerEvents = 'none';
+      }
+    });
+
+    setTimeout(function() {
+      sub.classList.add('active');
+      sub.style.animation = 'fadeInUp 0.5s ease';
+      var works = document.getElementById('aigcWorks');
+      if (works) { works.innerHTML = ''; for (var i = 0; i < 4; i++) addAigcWork('image'); }
+    }, 600);
+  }
+
+  function closeAigcSub() {
+    var grid = document.getElementById('aigcGrid');
+    if (!grid) return;
+    var contentDiv = grid.parentElement;
+    var pageHeader = contentDiv && contentDiv.previousElementSibling;
+    var sub = document.getElementById('aigcSubpage');
+    if (!sub) return;
+    sub.classList.remove('active');
+    if (pageHeader && pageHeader.classList.contains('subpage-header')) {
+      pageHeader.style.transition = 'opacity 0.4s ease';
+      pageHeader.style.opacity = '1';
+    }
+    grid.querySelectorAll('.aigc-card').forEach(function(c) {
+      c.style.transition = 'all 0.5s ease';
+      c.style.transform = '';
+      c.style.opacity = '1';
+      c.style.zIndex = '';
+      c.style.position = '';
+      c.style.pointerEvents = '';
+    });
+  }
+
+  function addAigcWork(type) {
+    const container = document.getElementById('aigcWorks');
+    if (!container) return;
+    const heights = [160, 200, 240, 280];
+    const colors = ['rgba(168,85,247,0.12),rgba(236,72,153,0.08)','rgba(6,182,212,0.12),rgba(59,130,246,0.08)','rgba(236,72,153,0.10),rgba(245,158,11,0.08)','rgba(108,92,231,0.12),rgba(6,182,212,0.08)'];
+    const h = heights[Math.floor(Math.random() * heights.length)];
+    const c = colors[Math.floor(Math.random() * colors.length)];
+    const emojis = ['🖼️','🎨','✨','🌟','💫','🎭'];
+    const item = document.createElement('div');
+    item.className = 'masonry-item';
+    item.style.height = h + 'px';
+    item.style.background = 'linear-gradient(135deg,' + c + ')';
+    item.style.animation = 'fadeInUp 0.4s ease';
+    item.innerHTML = '<span class="masonry-emoji">' + emojis[Math.floor(Math.random() * emojis.length)] + '</span><span>作品 #' + (container.children.length + 1) + '</span>';
+    container.appendChild(item);
+  }
+
+  // Card clicks
+  document.querySelectorAll('.module-card').forEach(card => {
+    card.addEventListener('click', () => { const p = card.dataset.page; if (p) navigateTo(p); });
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      const active = document.querySelector('.page.active');
+      if (active && active.id !== 'home' && active.id !== 'subpage') navigateTo('home');
+      else if (active && active.id === 'subpage') navigateTo('home');
+    }
+    if (e.key === ' ' && gameModalOpen) {
+      e.preventDefault();
+      if (!document.getElementById('gameOverlay').classList.contains('hidden')) startCurrentGame();
+    }
+    handleGameKey(e);
+  });
+
+  // ===== Game System =====
+  const gameCanvas = document.getElementById('gameCanvas');
+  const gameCtx = gameCanvas.getContext('2d');
+  const gameModal = document.getElementById('gameModal');
+  const gameOverlay = document.getElementById('gameOverlay');
+  const gameOverlayTitle = document.getElementById('gameOverlayTitle');
+  const gameOverlayDesc = document.getElementById('gameOverlayDesc');
+  const gameStartBtn = document.getElementById('gameStartBtn');
+  const gameScore = document.getElementById('gameScore');
+  const gameControlsHint = document.getElementById('gameControlsHint');
+  let gameModalOpen = false;
+  let currentGame = 'snake';
+  let gameAnimFrame = null;
+  let gameRunning = false;
+  let gamePaused = false;
+
+  function resizeGameCanvas() {
+    const wrap = document.getElementById('gameCanvasWrap');
+    const rect = wrap.getBoundingClientRect();
+    gameCanvas.width = Math.floor(Math.min(rect.width, rect.height));
+    gameCanvas.height = Math.floor(Math.min(rect.width, rect.height));
+  }
+
+  function toggleGameModal() {
+    gameModalOpen = !gameModalOpen;
+    gameModal.classList.toggle('active', gameModalOpen);
+    if (gameModalOpen) { resizeGameCanvas(); showOverlay(currentGame); }
+    else stopGame();
+  }
+
+  function switchGame(game) {
+    stopGame(); currentGame = game;
+    document.querySelectorAll('.game-tab').forEach(t => t.classList.toggle('active', t.dataset.game === game));
+    document.getElementById('gameOverlay').classList.remove('hidden');
+    showOverlay(game);
+  }
+
+  function showOverlay(game) {
+    document.getElementById('gameOverlay').classList.remove('hidden');
+    const title = document.getElementById('gameOverlayTitle');
+    const desc = document.getElementById('gameOverlayDesc');
+    const btn = document.getElementById('gameStartBtn');
+    btn.textContent = '开始游戏';
+    document.getElementById('gameTipsPanel').classList.remove('show');
+
+    if (game === 'snake') {
+      title.textContent = '🐍 贪吃蛇'; desc.textContent = '使用方向键控制蛇移动，吃到食物增长';
+      gameControlsHint.textContent = '↑ ↓ ← → 控制方向 | Ctrl：暂停 | 空格：重新开始';
+      document.getElementById('gameTipsContent').innerHTML = '使用 <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> 控制蛇的移动方向，吃到红色食物可以增长身体和增加分数。撞到墙壁或自己的身体游戏结束。<br><br>按 <kbd>Ctrl</kbd> 暂停游戏。';
+    } else if (game === 'flappy') {
+      title.textContent = '🐦 像素鸟'; desc.textContent = '按空格或点击屏幕让小鸟飞行，穿过管道';
+      gameControlsHint.textContent = '空格 / 点击：飞行 | Ctrl：暂停 | 空格：重新开始';
+      document.getElementById('gameTipsContent').innerHTML = '按 <kbd>空格</kbd> 或 <kbd>点击</kbd> 屏幕让小鸟向上飞，松开后小鸟会自然下落。控制小鸟穿过管道之间的空隙，每穿过一个管道得 1 分。撞到管道或上下边界游戏结束。<br><br>按 <kbd>Ctrl</kbd> 暂停游戏。';
+    } else if (game === 'breakout') {
+      title.textContent = '🧱 打砖块'; desc.textContent = '移动鼠标控制挡板，击碎所有砖块';
+      gameControlsHint.textContent = '鼠标移动控制挡板 | Ctrl：暂停 | 空格：重新开始';
+      document.getElementById('gameTipsContent').innerHTML = '移动 <kbd>鼠标</kbd> 控制底部挡板左右移动，反弹小球击碎上方的彩色砖块。每击碎一个砖块得 1 分，击碎所有砖块即为胜利。不要让球落到屏幕底部。<br><br>按 <kbd>Ctrl</kbd> 暂停游戏。';
+    }
+    gameScore.textContent = '得分: 0';
+  }
+
+  function toggleTips() { document.getElementById('gameTipsPanel').classList.toggle('show'); }
+
+  function startCurrentGame() {
+    document.getElementById('gameOverlay').classList.add('hidden');
+    gameRunning = true; gamePaused = false;
+    if (currentGame === 'snake') startSnake();
+    else if (currentGame === 'flappy') startFlappy();
+    else if (currentGame === 'breakout') startBreakout();
+  }
+
+  function stopGame() {
+    gameRunning = false;
+    if (gameAnimFrame) { cancelAnimationFrame(gameAnimFrame); gameAnimFrame = null; }
+    if (snakeState) snakeState = null;
+    if (flappyState) { document.getElementById('gameCanvas').onclick = null; document.onkeydown = null; flappyState = null; }
+    if (breakoutState) { document.getElementById('gameCanvas').onmousemove = null; breakoutState = null; }
+  }
+
+  function handleGameKey(e) {
+    if (!gameModalOpen) return;
+    if (e.key === 'Control') { e.preventDefault(); if (gameRunning) gamePaused = !gamePaused; return; }
+    if (currentGame === 'snake' && gameRunning && !gamePaused) handleSnakeKey(e);
+  }
+
+  // ===== Snake =====
+  let snakeState = null;
+
+  function startSnake() {
+    const size = gameCanvas.width;
+    const gridSize = 20;
+    const cellSize = size / gridSize;
+    const snake = [{x: 10, y: 10}, {x: 9, y: 10}, {x: 8, y: 10}];
+    let dir = {x: 1, y: 0}, nextDir = {x: 1, y: 0};
+    let food = spawnFood(snake, gridSize);
+    let score = 0, gameOver = false;
+    const tickInterval = 180;
+    snakeState = { snake, dir, nextDir, food, score, gameOver, gridSize, cellSize };
+
+    function tick() {
+      if (!gameRunning || !snakeState) return;
+      if (!snakeState.gameOver && !gamePaused) {
+        snakeState.dir = { ...snakeState.nextDir };
+        const head = { x: snakeState.snake[0].x + snakeState.dir.x, y: snakeState.snake[0].y + snakeState.dir.y };
+        if (head.x < 0 || head.x >= snakeState.gridSize || head.y < 0 || head.y >= snakeState.gridSize ||
+            snakeState.snake.some(s => s.x === head.x && s.y === head.y)) { snakeState.gameOver = true; }
+        else {
+          snakeState.snake.unshift(head);
+          if (head.x === snakeState.food.x && head.y === snakeState.food.y) {
+            snakeState.score++;
+            snakeState.food = spawnFood(snakeState.snake, snakeState.gridSize);
+          } else snakeState.snake.pop();
+        }
+      }
+      drawSnake(snakeState);
+      document.getElementById('gameScore').textContent = `得分: ${snakeState.score}`;
+      if (snakeState.gameOver) {
+        document.getElementById('gameOverlayTitle').textContent = '💀 游戏结束';
+        document.getElementById('gameOverlayDesc').textContent = `最终得分: ${snakeState.score}`;
+        document.getElementById('gameStartBtn').textContent = '重新开始';
+        document.getElementById('gameOverlay').classList.remove('hidden');
+        gameRunning = false; return;
+      }
+      gameAnimFrame = setTimeout(tick, tickInterval);
+    }
+    tick();
+  }
+
+  function spawnFood(snake, gridSize) {
+    let pos;
+    do { pos = { x: Math.floor(Math.random() * gridSize), y: Math.floor(Math.random() * gridSize) }; }
+    while (snake.some(s => s.x === pos.x && s.y === pos.y));
+    return pos;
+  }
+
+  function drawSnake(state) {
+    const ctx = gameCtx;
+    const { snake, food, cellSize, gridSize } = state;
+    const w = gameCanvas.width, h = gameCanvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const bgGrad = ctx.createLinearGradient(0, 0, w, h);
+    bgGrad.addColorStop(0, '#0d0d24'); bgGrad.addColorStop(0.5, '#0a0a1a'); bgGrad.addColorStop(1, '#0d0d24');
+    ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    for (let i = 0; i < 20; i++) { const sx = (i * 89.3 + 33) % w, sy = (i * 61.7 + 17) % h; ctx.beginPath(); ctx.arc(sx, sy, 1, 0, Math.PI * 2); ctx.fill(); }
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 0.5;
+    for (let i = 0; i <= gridSize; i++) { ctx.beginPath(); ctx.moveTo(i * cellSize, 0); ctx.lineTo(i * cellSize, h); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i * cellSize); ctx.lineTo(w, i * cellSize); ctx.stroke(); }
+
+    if (gamePaused) {
+      ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 36px -apple-system, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('⏸ 已暂停', w / 2, h / 2);
+      ctx.font = '16px -apple-system, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillText('按 Ctrl 键继续', w / 2, h / 2 + 40);
+      return;
+    }
+
+    ctx.shadowColor = 'rgba(236,72,153,0.5)'; ctx.shadowBlur = 12;
+    ctx.fillStyle = '#ec4899'; ctx.beginPath();
+    ctx.arc(food.x * cellSize + cellSize / 2, food.y * cellSize + cellSize / 2, cellSize / 2 - 2, 0, Math.PI * 2);
+    ctx.fill(); ctx.shadowBlur = 0;
+
+    snake.forEach((seg, i) => {
+      const t = i / snake.length;
+      const hue = 260 - t * 80;
+      ctx.shadowColor = `hsla(${hue}, 70%, 60%, 0.3)`; ctx.shadowBlur = i === 0 ? 12 : 4;
+      ctx.fillStyle = i === 0 ? '#a78bfa' : `hsl(${hue}, 60%, ${50 - t * 20}%)`;
+      const p = i === 0 ? 1 : 2;
+      ctx.beginPath(); ctx.roundRect(seg.x * cellSize + p, seg.y * cellSize + p, cellSize - p * 2, cellSize - p * 2, i === 0 ? 4 : 3); ctx.fill();
+    });
+    ctx.shadowBlur = 0;
+  }
+
+  function handleSnakeKey(e) {
+    if (!snakeState || snakeState.gameOver) return;
+    const km = { 'ArrowUp': {x:0,y:-1}, 'ArrowDown': {x:0,y:1}, 'ArrowLeft': {x:-1,y:0}, 'ArrowRight': {x:1,y:0} };
+    const d = km[e.key];
+    if (d && (d.x !== -snakeState.dir.x || d.y !== -snakeState.dir.y)) snakeState.nextDir = d;
+  }
+
+  // ===== Flappy Bird =====
+  let flappyState = null;
+
+  function startFlappy() {
+    const w = gameCanvas.width, h = gameCanvas.height;
+    const bird = { x: w * 0.25, y: h / 2, r: 12, vy: 0, gravity: 0.059, jump: -3.0 };
+    let pipes = [], score = 0, gameOver = false, frameCount = 0;
+    const pipeW = 50, gap = h * 0.3, pipeSpeed = 1.8;
+    flappyState = { bird, pipes, score, gameOver, w, h, pipeW, gap, pipeSpeed, frameCount };
+    const canvasEl = gameCanvas;
+    canvasEl.onclick = () => { if (flappyState && !flappyState.gameOver) flappyState.bird.vy = flappyState.bird.jump; };
+    document.onkeydown = e => { if (e.key === ' ' || e.key === 'ArrowUp') { e.preventDefault(); if (flappyState && !flappyState.gameOver) flappyState.bird.vy = flappyState.bird.jump; } };
+
+    function gameLoop() {
+      if (!gameRunning || !flappyState) return;
+      if (!flappyState.gameOver && !gamePaused) {
+        flappyState.frameCount++;
+        flappyState.bird.vy += flappyState.bird.gravity;
+        flappyState.bird.y += flappyState.bird.vy;
+        if (flappyState.frameCount % 90 === 0) { const pipeY = Math.random() * (h - gap - 60) + 30; flappyState.pipes.push({ x: w, y: pipeY }); }
+        flappyState.pipes.forEach(p => p.x -= flappyState.pipeSpeed);
+        flappyState.pipes = flappyState.pipes.filter(p => p.x + flappyState.pipeW > 0);
+        const b = flappyState.bird;
+        if (b.y - b.r < 0 || b.y + b.r > h) flappyState.gameOver = true;
+        for (const p of flappyState.pipes) {
+          if (b.x + b.r > p.x && b.x - b.r < p.x + flappyState.pipeW) {
+            if (b.y - b.r < p.y || b.y + b.r > p.y + flappyState.gap) { flappyState.gameOver = true; break; }
+          }
+          if (b.x > p.x + flappyState.pipeW && !p.passed) { p.passed = true; flappyState.score++; }
+        }
+      }
+      drawFlappy(flappyState);
+      document.getElementById('gameScore').textContent = `得分: ${flappyState.score}`;
+      if (flappyState.gameOver) {
+        document.getElementById('gameOverlayTitle').textContent = '💀 游戏结束';
+        document.getElementById('gameOverlayDesc').textContent = `最终得分: ${flappyState.score}`;
+        document.getElementById('gameStartBtn').textContent = '重新开始';
+        document.getElementById('gameOverlay').classList.remove('hidden');
+        gameRunning = false; canvasEl.onclick = null; document.onkeydown = null; return;
+      }
+      gameAnimFrame = requestAnimationFrame(gameLoop);
+    }
+    gameLoop();
+  }
+
+  function drawFlappy(state) {
+    const ctx = gameCtx;
+    const { bird, pipes, w, h, pipeW, gap } = state;
+    ctx.clearRect(0, 0, w, h);
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, '#0c0c2a'); grad.addColorStop(0.5, '#1a0a2a'); grad.addColorStop(1, '#0a0a1a');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    for (let i = 0; i < 30; i++) { const sx = (i * 137.5 + 50) % w, sy = (i * 97.3 + 20) % (h * 0.6); ctx.beginPath(); ctx.arc(sx, sy, 1 + i % 2, 0, Math.PI * 2); ctx.fill(); }
+    pipes.forEach(p => {
+      ctx.shadowColor = 'rgba(6,182,212,0.3)'; ctx.shadowBlur = 8;
+      const gT = ctx.createLinearGradient(p.x, 0, p.x + pipeW, 0); gT.addColorStop(0, '#06b6d4'); gT.addColorStop(1, '#3b82f6');
+      ctx.fillStyle = gT; ctx.beginPath(); ctx.roundRect(p.x, 0, pipeW, p.y - 20, [0,0,4,4]); ctx.fill();
+      ctx.fillStyle = '#0ea5e9'; ctx.beginPath(); ctx.roundRect(p.x - 4, p.y - 20, pipeW + 8, 16, 4); ctx.fill();
+      const gB = ctx.createLinearGradient(p.x, 0, p.x + pipeW, 0); gB.addColorStop(0, '#06b6d4'); gB.addColorStop(1, '#3b82f6');
+      ctx.fillStyle = gB; ctx.beginPath(); ctx.roundRect(p.x, p.y + gap + 20, pipeW, h - p.y - gap - 20, [4,4,0,0]); ctx.fill();
+      ctx.fillStyle = '#0ea5e9'; ctx.beginPath(); ctx.roundRect(p.x - 4, p.y + gap, pipeW + 8, 16, 4); ctx.fill();
+      ctx.shadowBlur = 0;
+    });
+    const b = bird, angle = Math.min(Math.max(b.vy * 0.05, -0.5), 0.8);
+    ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(angle);
+    ctx.shadowColor = 'rgba(168,85,247,0.5)'; ctx.shadowBlur = 16;
+    ctx.fillStyle = '#a855f7'; ctx.beginPath(); ctx.ellipse(0, 0, b.r, b.r * 0.85, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#7c3aed'; ctx.beginPath(); ctx.ellipse(-4, 6, 8, 5, -0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(6, -3, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1a1a2e'; ctx.beginPath(); ctx.arc(7, -3, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.moveTo(12, -1); ctx.lineTo(20, 1); ctx.lineTo(12, 3); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    if (gamePaused) {
+      ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 36px -apple-system, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('⏸ 已暂停', w / 2, h / 2);
+      ctx.font = '16px -apple-system, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillText('按 Ctrl 键继续', w / 2, h / 2 + 40);
+    }
+    ctx.shadowBlur = 0;
+  }
+
+  // ===== Breakout =====
+  let breakoutState = null;
+
+  function startBreakout() {
+    const w = gameCanvas.width, h = gameCanvas.height;
+    const paddle = { x: w / 2 - 50, y: h - 30, w: 100, h: 14 };
+    const ball = { x: w / 2, y: h - 50, r: 7, dx: 3, dy: -3, speed: 3 };
+    const rows = 5, cols = 8, brickW = (w - 40) / cols, brickH = 22;
+    const bricks = [], colors = ['#ec4899', '#a855f7', '#6C5CE7', '#3b82f6', '#06b6d4'];
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) bricks.push({ x: 20 + c * brickW, y: 30 + r * (brickH + 8), w: brickW - 4, h: brickH, alive: true, color: colors[r % colors.length] });
+    let score = 0, gameOver = false;
+    breakoutState = { paddle, ball, bricks, score, gameOver, w, h };
+    const canvasEl = gameCanvas;
+    canvasEl.onmousemove = e => {
+      if (!breakoutState || breakoutState.gameOver) return;
+      const rect = gameCanvas.getBoundingClientRect(), scaleX = gameCanvas.width / rect.width;
+      const p = breakoutState.paddle; p.x = (e.clientX - rect.left) * scaleX - p.w / 2;
+      if (p.x < 0) p.x = 0; if (p.x + p.w > breakoutState.w) p.x = breakoutState.w - p.w;
+    };
+
+    function gameLoop() {
+      if (!gameRunning || !breakoutState) return;
+      if (!breakoutState.gameOver && !gamePaused) {
+        const b = breakoutState.ball; b.x += b.dx; b.y += b.dy;
+        if (b.x - b.r < 0 || b.x + b.r > w) b.dx = -b.dx;
+        if (b.y - b.r < 0) b.dy = -b.dy;
+        const p = breakoutState.paddle;
+        if (b.y + b.r > p.y && b.y - b.r < p.y + p.h && b.x > p.x && b.x < p.x + p.w) {
+          b.dy = -Math.abs(b.dy); const hit = (b.x - p.x) / p.w; b.dx = (hit - 0.5) * 2 * b.speed * 0.8;
+        }
+        if (b.y + b.r > h) breakoutState.gameOver = true;
+        for (const brick of breakoutState.bricks) {
+          if (!brick.alive) continue;
+          if (b.x + b.r > brick.x && b.x - b.r < brick.x + brick.w && b.y + b.r > brick.y && b.y - b.r < brick.y + brick.h) {
+            brick.alive = false; breakoutState.score++;
+            const ox = Math.min(b.x + b.r - brick.x, brick.x + brick.w - (b.x - b.r));
+            const oy = Math.min(b.y + b.r - brick.y, brick.y + brick.h - (b.y - b.r));
+            if (ox < oy) b.dx = -b.dx; else b.dy = -b.dy;
+          }
+        }
+        if (breakoutState.bricks.every(br => !br.alive)) breakoutState.gameOver = true;
+      }
+      drawBreakout(breakoutState);
+      document.getElementById('gameScore').textContent = `得分: ${breakoutState.score}`;
+      if (breakoutState.gameOver) {
+        const won = breakoutState.bricks.every(br => !br.alive);
+        document.getElementById('gameOverlayTitle').textContent = won ? '🎉 恭喜通关' : '💀 游戏结束';
+        document.getElementById('gameOverlayDesc').textContent = `最终得分: ${breakoutState.score}`;
+        document.getElementById('gameStartBtn').textContent = '重新开始';
+        document.getElementById('gameOverlay').classList.remove('hidden');
+        gameRunning = false; canvasEl.onmousemove = null; return;
+      }
+      gameAnimFrame = requestAnimationFrame(gameLoop);
+    }
+    gameLoop();
+  }
+
+  function drawBreakout(state) {
+    const ctx = gameCtx;
+    const { paddle, ball, bricks, w, h } = state;
+    ctx.clearRect(0, 0, w, h);
+    const bgGrad = ctx.createLinearGradient(0, 0, w, h);
+    bgGrad.addColorStop(0, '#0d0d24'); bgGrad.addColorStop(0.5, '#0a0a1a'); bgGrad.addColorStop(1, '#0d0d24');
+    ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    for (let i = 0; i < 40; i++) { const sx = (i * 73.1 + 41) % w, sy = (i * 51.3 + 29) % h; ctx.beginPath(); ctx.arc(sx, sy, 1, 0, Math.PI * 2); ctx.fill(); }
+    bricks.forEach(brick => {
+      if (!brick.alive) return;
+      ctx.shadowColor = brick.color + '40'; ctx.shadowBlur = 10;
+      const grad = ctx.createLinearGradient(brick.x, brick.y, brick.x, brick.y + brick.h);
+      grad.addColorStop(0, brick.color); grad.addColorStop(1, brick.color + '88');
+      ctx.fillStyle = grad; ctx.beginPath(); ctx.roundRect(brick.x, brick.y, brick.w, brick.h, 4); ctx.fill();
+    });
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'rgba(108,92,231,0.4)'; ctx.shadowBlur = 14;
+    const pGrad = ctx.createLinearGradient(paddle.x, paddle.y, paddle.x, paddle.y + paddle.h);
+    pGrad.addColorStop(0, '#a78bfa'); pGrad.addColorStop(1, '#6C5CE7');
+    ctx.fillStyle = pGrad; ctx.beginPath(); ctx.roundRect(paddle.x, paddle.y, paddle.w, paddle.h, 7); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'rgba(168,85,247,0.6)'; ctx.shadowBlur = 18;
+    const bGrad = ctx.createRadialGradient(ball.x - 2, ball.y - 2, 1, ball.x, ball.y, ball.r);
+    bGrad.addColorStop(0, '#fff'); bGrad.addColorStop(0.3, '#c4b5fd'); bGrad.addColorStop(1, '#7c3aed');
+    ctx.fillStyle = bGrad; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    if (gamePaused) {
+      ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 36px -apple-system, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('⏸ 已暂停', w / 2, h / 2);
+      ctx.font = '16px -apple-system, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillText('按 Ctrl 键继续', w / 2, h / 2 + 40);
+    }
+  }
+
+  // ===== Polyfill =====
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+      if (r > w / 2) r = w / 2; if (r > h / 2) r = h / 2;
+      this.moveTo(x + r, y); this.lineTo(x + w - r, y); this.quadraticCurveTo(x + w, y, x + w, y + r);
+      this.lineTo(x + w, y + h - r); this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      this.lineTo(x + r, y + h); this.quadraticCurveTo(x, y + h, x, y + h - r);
+      this.lineTo(x, y + r); this.quadraticCurveTo(x, y, x + r, y);
+      return this;
+    };
+  }
+
+  window.addEventListener('resize', () => { if (gameModalOpen) resizeGameCanvas(); });
+</script>
+</body>
+</html>

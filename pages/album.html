@@ -1,0 +1,48 @@
+<div class="subpage-header" style="--page-grad-1:#06b6d4;--page-grad-2:#3b82f6">
+  <h2>📸 相册</h2>
+  <p>用镜头捕捉生活中的每一个精彩瞬间</p>
+</div>
+<div class="subpage-content">
+  <div style="display:flex;gap:0.8rem;margin-bottom:1.5rem;flex-wrap:wrap">
+    <button class="add-btn" onclick="addAlbumItem('image')">＋ 添加图片</button>
+    <button class="add-btn" onclick="addAlbumItem('video')">＋ 添加视频</button>
+  </div>
+  <div class="album-masonry" id="albumMasonry">
+    <div class="masonry-item" style="height:180px;background:linear-gradient(135deg,rgba(6,182,212,0.12),rgba(59,130,246,0.08))"><span class="masonry-emoji">🌅</span><span>日落</span></div>
+    <div class="masonry-item" style="height:260px;background:linear-gradient(135deg,rgba(168,85,247,0.12),rgba(236,72,153,0.08))"><span class="masonry-emoji">🏔️</span><span>山川</span></div>
+    <div class="masonry-item" style="height:200px;background:linear-gradient(135deg,rgba(6,182,212,0.10),rgba(59,130,246,0.06))"><span class="masonry-emoji">🌊</span><span>海洋</span></div>
+    <div class="masonry-item" style="height:300px;background:linear-gradient(135deg,rgba(236,72,153,0.12),rgba(245,158,11,0.08))"><span class="masonry-emoji">🌆</span><span>城市</span></div>
+    <div class="masonry-item" style="height:220px;background:linear-gradient(135deg,rgba(168,85,247,0.10),rgba(108,92,231,0.06))"><span class="masonry-emoji">🌸</span><span>花园</span></div>
+    <div class="masonry-item" style="height:170px;background:linear-gradient(135deg,rgba(6,182,212,0.14),rgba(59,130,246,0.10))"><span class="masonry-emoji">🌟</span><span>星空</span></div>
+    <div class="masonry-item" style="height:280px;background:linear-gradient(135deg,rgba(236,72,153,0.10),rgba(168,85,247,0.06))"><span class="masonry-emoji">🍜</span><span>美食</span></div>
+    <div class="masonry-item" style="height:190px;background:linear-gradient(135deg,rgba(108,92,231,0.12),rgba(6,182,212,0.08))"><span class="masonry-emoji">🎭</span><span>艺术</span></div>
+  </div>
+</div>
+
+<script>
+function addAlbumItem(type) {
+  const container = document.getElementById('albumMasonry');
+  const heights = [160, 200, 240, 280, 320];
+  const colors = [
+    'rgba(6,182,212,0.12),rgba(59,130,246,0.08)',
+    'rgba(168,85,247,0.12),rgba(236,72,153,0.08)',
+    'rgba(236,72,153,0.10),rgba(245,158,11,0.08)',
+    'rgba(108,92,231,0.12),rgba(6,182,212,0.08)',
+    'rgba(59,130,246,0.10),rgba(168,85,247,0.06)'
+  ];
+  const h = heights[Math.floor(Math.random() * heights.length)];
+  const c = colors[Math.floor(Math.random() * colors.length)];
+  const emojis = type === 'image' ? ['📷','📸','🎨','🖼️','🌄','🎑'] : ['🎬','📹','🎥','📺','🎞️'];
+  const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+  const labels = type === 'image' ? ['新照片','我的作品','精彩瞬间','美好时光'] : ['新视频','我的影片','精彩片段','记录'];
+  const label = labels[Math.floor(Math.random() * labels.length)];
+  const item = document.createElement('div');
+  item.className = 'masonry-item';
+  item.style.height = h + 'px';
+  item.style.background = `linear-gradient(135deg,${c})`;
+  item.style.animation = 'fadeInUp 0.4s ease';
+  item.innerHTML = `<span class="masonry-emoji">${emoji}</span><span>${label}</span>`;
+  container.appendChild(item);
+  container.scrollTop = container.scrollHeight;
+}
+</script>

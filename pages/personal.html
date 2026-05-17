@@ -1,0 +1,73 @@
+<div class="subpage-header" style="--page-grad-1:#6C5CE7;--page-grad-2:#a855f7">
+  <h2>👤 个人信息</h2>
+  <p>热爱技术，持续学习，用代码创造价值</p>
+</div>
+<div class="subpage-content">
+  <div class="profile-section">
+    <div class="avatar-frame">
+      <div class="avatar-placeholder">🦸</div>
+    </div>
+    <div>
+      <div class="info-list">
+        <div class="info-item"><span class="label">姓名</span><span class="value">张小明</span></div>
+        <div class="info-item"><span class="label">职位</span><span class="value">全栈开发者 / AI 爱好者</span></div>
+        <div class="info-item"><span class="label">地点</span><span class="value">中国 · 北京</span></div>
+        <div class="info-item"><span class="label">邮箱</span><span class="value">hello@example.com</span></div>
+        <div class="info-item"><span class="label">GitHub</span><span class="value">github.com/example</span></div>
+      </div>
+      <div class="skill-tags">
+        <span class="skill-tag">TypeScript</span>
+        <span class="skill-tag">React</span>
+        <span class="skill-tag">Python</span>
+        <span class="skill-tag">AI/ML</span>
+        <span class="skill-tag">Node.js</span>
+        <span class="skill-tag">Go</span>
+        <span class="skill-tag">Rust</span>
+        <span class="skill-tag">Docker</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <div class="projects-section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+      <h3 style="font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">📋 项目经历</h3>
+      <button class="add-btn" onclick="addProject()">＋ 添加项目</button>
+    </div>
+    <div class="projects-scroll" id="projectsContainer">
+      <div class="project-card">
+        <div class="project-title">AI 智能助手平台</div>
+        <div class="project-meta">2025.06 - 2026.02</div>
+        <div class="project-desc">基于大语言模型构建的智能对话平台，支持多轮对话、知识库检索和插件系统。日活用户超 10 万。</div>
+      </div>
+      <div class="project-card">
+        <div class="project-title">开源组件库</div>
+        <div class="project-meta">2024.09 - 至今</div>
+        <div class="project-desc">一个基于 React 的现代化 UI 组件库，包含 60+ 组件，GitHub 5000+ star，被多个企业项目采用。</div>
+      </div>
+      <div class="project-card">
+        <div class="project-title">实时协作白板</div>
+        <div class="project-meta">2024.03 - 2024.08</div>
+        <div class="project-desc">基于 WebSocket 和 Canvas 的多人实时协作白板应用，支持图形绘制、文字输入和思维导图功能。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function addProject() {
+  const container = document.getElementById('projectsContainer');
+  const card = document.createElement('div');
+  card.className = 'project-card';
+  card.style.animation = 'fadeInUp 0.4s ease';
+  const num = container.children.length + 1;
+  card.innerHTML = `
+    <div class="project-title">新项目 #${num}</div>
+    <div class="project-meta">${new Date().getFullYear()} - 至今</div>
+    <div class="project-desc">这是一个新添加的项目经历，你可以编辑这段描述文字来介绍你的项目内容、技术栈和成果。</div>
+  `;
+  container.appendChild(card);
+  container.scrollTop = container.scrollHeight;
+}
+</script>

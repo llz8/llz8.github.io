@@ -1,0 +1,100 @@
+<div class="subpage-header" style="--page-grad-1:#a855f7;--page-grad-2:#ec4899">
+  <h2>🤖 AIGC</h2>
+  <p>探索 AI 生成内容的无限可能</p>
+</div>
+<div class="subpage-content">
+  <div class="aigc-grid" id="aigcGrid">
+    <div class="aigc-card" data-aigc="painting" onclick="openAigcSub('painting')">
+      <h4>🎨 AI 绘画</h4>
+      <p>使用 Stable Diffusion、Midjourney 等工具进行 AI 艺术创作，探索视觉生成的边界。</p>
+    </div>
+    <div class="aigc-card" data-aigc="writing" onclick="openAigcSub('writing')">
+      <h4>📝 AI 写作</h4>
+      <p>利用大语言模型辅助内容创作，从文案到故事，让灵感更快落地。</p>
+    </div>
+    <div class="aigc-card" data-aigc="music" onclick="openAigcSub('music')">
+      <h4>🎵 AI 音乐</h4>
+      <p>通过 AI 生成音乐和音效，探索算法与艺术的交汇点。</p>
+    </div>
+    <div class="aigc-card" data-aigc="video" onclick="openAigcSub('video')">
+      <h4>🎬 AI 视频</h4>
+      <p>使用 AI 视频生成和编辑工具，打造全新的视觉叙事体验。</p>
+    </div>
+  </div>
+
+  <div class="aigc-subpage" id="aigcSubpage">
+    <div class="aigc-sub-header">
+      <button class="back-btn" onclick="closeAigcSub()" style="position:relative;top:0;left:0">←</button>
+      <h3 id="aigcSubTitle">🎨 AI 绘画</h3>
+    </div>
+    <div style="display:flex;gap:0.8rem;margin-bottom:1.2rem;flex-wrap:wrap">
+      <button class="add-btn" onclick="addAigcWork('image')">＋ 添加作品</button>
+    </div>
+    <div class="album-masonry" id="aigcWorks"></div>
+  </div>
+</div>
+
+<script>
+function openAigcSub(type) {
+  const grid = document.getElementById('aigcGrid');
+  const sub = document.getElementById('aigcSubpage');
+  const title = document.getElementById('aigcSubTitle');
+  const titles = { painting: '🎨 AI 绘画', writing: '📝 AI 写作', music: '🎵 AI 音乐', video: '🎬 AI 视频' };
+  title.textContent = titles[type] || 'AIGC';
+
+  grid.querySelectorAll('.aigc-card').forEach(c => {
+    if (c.dataset.aigc === type) {
+      c.style.transition = 'all 0.6s cubic-bezier(0.16,1,0.3,1)';
+      c.style.transform = 'scale(0.7) translate(-200px, -180px)';
+      c.style.opacity = '0';
+    } else {
+      c.style.transition = 'opacity 0.5s ease';
+      c.style.opacity = '0';
+    }
+  });
+
+  setTimeout(() => {
+    grid.style.display = 'none';
+    sub.classList.add('active');
+    sub.style.animation = 'fadeInUp 0.5s ease';
+    document.getElementById('aigcWorks').innerHTML = '';
+    for (let i = 0; i < 4; i++) {
+      addAigcWork('image');
+    }
+  }, 500);
+}
+
+function closeAigcSub() {
+  const grid = document.getElementById('aigcGrid');
+  const sub = document.getElementById('aigcSubpage');
+  sub.classList.remove('active');
+  grid.style.display = 'grid';
+  grid.querySelectorAll('.aigc-card').forEach(c => {
+    c.style.transition = 'all 0.5s ease';
+    c.style.transform = '';
+    c.style.opacity = '1';
+  });
+}
+
+function addAigcWork(type) {
+  const container = document.getElementById('aigcWorks');
+  const heights = [160, 200, 240, 280];
+  const colors = [
+    'rgba(168,85,247,0.12),rgba(236,72,153,0.08)',
+    'rgba(6,182,212,0.12),rgba(59,130,246,0.08)',
+    'rgba(236,72,153,0.10),rgba(245,158,11,0.08)',
+    'rgba(108,92,231,0.12),rgba(6,182,212,0.08)'
+  ];
+  const h = heights[Math.floor(Math.random() * heights.length)];
+  const c = colors[Math.floor(Math.random() * colors.length)];
+  const emojis = ['🖼️','🎨','✨','🌟','💫','🎭'];
+  const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+  const item = document.createElement('div');
+  item.className = 'masonry-item';
+  item.style.height = h + 'px';
+  item.style.background = `linear-gradient(135deg,${c})`;
+  item.style.animation = 'fadeInUp 0.4s ease';
+  item.innerHTML = `<span class="masonry-emoji">${emoji}</span><span>作品 #${container.children.length + 1}</span>`;
+  container.appendChild(item);
+}
+</script>
