@@ -227,8 +227,8 @@
 
   .back-btn {
     position: fixed;
-    top: 1.5rem; left: 1.5rem;
-    z-index: 100;
+    top: 30px; left: 342px;
+    z-index: 600;
     width: 44px; height: 44px;
     border-radius: 50%;
     background: rgba(255,255,255,0.06);
@@ -243,6 +243,8 @@
     transition: all 0.3s ease;
   }
 
+  #toolbarBackBtn { display: none; }
+  #toolbarBackBtn.visible { display: flex; }
   .back-btn:hover { background: rgba(255,255,255,0.12); transform: scale(1.1); }
 
   .subpage-header { margin-bottom: 3rem; animation: fadeInUp 0.6s ease; }
@@ -566,142 +568,478 @@
 
   .game-modal.active { display: flex; }
 
-  .game-modal-content {
-    position: relative;
-    width: min(740px, 92vw);
-    height: min(620px, 86vh);
-    background: rgba(16,16,36,0.96);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 24px;
-    padding: 1.5rem;
-    display: flex;
+  /* ===== Toolbar (Top-Left) ===== */
+  .toolbar {
+    position: fixed;
+    top: 30px; left: 30px;
+    z-index: 500;
+    display: inline-flex;
     flex-direction: column;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    gap: 6px;
   }
 
-  .game-modal-close {
+  .toolbar-tabs {
+    display: flex;
+    gap: 4px;
+  }
+
+  .toolbar-tab {
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+
+  .toolbar-tab:hover { border-color: rgba(255,255,255,0.15); color: #fff; }
+  .toolbar-tab.active { background: rgba(108,92,231,0.15); border-color: rgba(108,92,231,0.3); color: #c4b5fd; }
+
+  .toolbar-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 10px;
+    border-radius: 16px;
+    background: rgba(16,16,36,0.92);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(16px);
+    width: 300px;
+  }
+  .toolbar-grid.collapsed { display: none; }
+
+  .tool-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 4px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .tool-card:hover { background: rgba(108,92,231,0.15); border-color: rgba(108,92,231,0.3); transform: translateY(-2px); }
+  .tool-card .icon { font-size: 1rem; line-height: 1; }
+  .tool-card .name { font-size: 0.65rem; color: var(--text-secondary); white-space: normal; }
+
+  /* ===== Top-Right Widgets ===== */
+  .top-right-widgets {
+    position: fixed;
+    top: 30px; right: 30px;
+    z-index: 500;
+    display: grid;
+    grid-template-columns: auto 260px;
+    grid-template-rows: auto auto;
+    gap: 10px;
+    align-items: start;
+  }
+
+  .music-controls-panel { grid-column: 1; grid-row: 1 / 3; }
+  .calendar-widget { grid-column: 2; grid-row: 1 / 3; }
+
+  /* ===== Calendar ===== */
+  .calendar-widget {
+    background: rgba(16,16,36,0.92);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 14px;
+    backdrop-filter: blur(16px);
+  }
+
+  .cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .cal-header .cal-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .cal-header button {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+
+  .cal-header button:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+  .cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 4px;
+  }
+
+  .cal-weekdays span {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    padding: 4px 0;
+  }
+
+  .cal-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+
+  .cal-day {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    cursor: default;
+    transition: all 0.2s ease;
+    min-height: 36px;
+    overflow: hidden;
+    padding: 0 1px;
+  }
+
+  .cal-day .solar { font-size: 0.72rem; color: rgba(255,255,255,0.85); line-height: 1.2; }
+  .cal-day .lunar { font-size: 0.45rem; color: rgba(255,255,255,0.35); line-height: 1; }
+
+  .cal-day.other-month .solar { color: rgba(255,255,255,0.2); }
+  .cal-day.other-month .lunar { color: rgba(255,255,255,0.1); }
+
+  .cal-day.today { background: rgba(108,92,231,0.2); border: 1px solid rgba(108,92,231,0.3); }
+  .cal-day.holiday .solar { color: #f472b6 !important; }
+  .cal-day.holiday .lunar { color: rgba(244,114,182,0.5) !important; }
+  .cal-day.holiday { background: rgba(236,72,153,0.06); }
+  .cal-day.weekend .solar { color: rgba(244,114,182,0.7); }
+
+  .cal-today-btn {
+    margin-top: 8px;
+    padding: 4px 0;
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .cal-today-btn:hover { background: rgba(108,92,231,0.15); border-color: rgba(108,92,231,0.3); color: #c4b5fd; }
+
+  /* ===== Music Player ===== */
+  .music-controls-panel {
+    background: rgba(16,16,36,0.92);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 12px;
+    backdrop-filter: blur(16px);
+    width: 256px;
+    overflow: hidden;
+  }
+
+  .music-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .music-tab {
+    flex: 1;
+    padding: 6px 0;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .music-tab:hover { border-color: rgba(255,255,255,0.15); color: #fff; }
+  .music-tab.active { background: rgba(108,92,231,0.15); border-color: rgba(108,92,231,0.3); color: #c4b5fd; }
+
+  .music-info {
+    text-align: center;
+    padding: 8px 0;
+  }
+
+  .music-info .song-name {
+    font-size: 0.85rem;
+    color: #fff;
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .music-info .song-artist {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+  }
+
+  .music-progress {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 8px 0;
+  }
+
+  .music-progress .time {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    min-width: 32px;
+  }
+
+  .music-progress .bar {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.1);
+    cursor: pointer;
+    position: relative;
+  }
+
+  .music-progress .bar .fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  .music-progress .bar .thumb {
     position: absolute;
-    top: 0.75rem; right: 0.75rem;
-    z-index: 10;
-    width: 34px; height: 34px;
+    top: 50%; left: 0%;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--primary);
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+  }
+
+  .music-progress .bar:hover .thumb { opacity: 1; }
+
+  .music-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  .music-controls button {
+    width: 32px; height: 32px;
     border-radius: 50%;
     border: 1px solid rgba(255,255,255,0.08);
     background: rgba(255,255,255,0.04);
     color: #fff;
+    font-size: 0.85rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
+    transition: all 0.2s ease;
   }
 
-  .game-modal-close:hover { background: rgba(255,255,255,0.1); transform: scale(1.1); }
+  .music-controls button:hover { background: rgba(255,255,255,0.1); transform: scale(1.08); }
+  .music-controls .play-btn { width: 38px; height: 38px; background: linear-gradient(135deg, var(--primary), var(--accent)); border: none; font-size: 0.95rem; }
+  .music-controls .play-btn:hover { transform: scale(1.1); box-shadow: 0 4px 16px rgba(108,92,231,0.4); }
 
-  .game-tabs { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-shrink: 0; }
+  .music-volume {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
 
-  .game-tab {
-    padding: 7px 18px;
+  .music-volume .vol-icon { font-size: 0.7rem; color: var(--text-secondary); }
+  .music-volume .vol-bar { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.1); cursor: pointer; position: relative; }
+  .music-volume .vol-bar .fill { height: 100%; border-radius: 2px; background: rgba(255,255,255,0.3); width: 70%; }
+
+  .music-playlist {
+    max-height: 120px;
+    overflow-y: auto;
+    margin-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    padding-top: 6px;
+  }
+
+  .music-playlist::-webkit-scrollbar { width: 3px; }
+  .music-playlist::-webkit-scrollbar-track { background: transparent; }
+  .music-playlist::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+  .playlist-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 5px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    min-width: 0;
+  }
+
+  .playlist-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  .playlist-item.active { color: #c4b5fd; background: rgba(108,92,231,0.1); }
+  .playlist-item .pl-icon { flex-shrink: 0; font-size: 0.65rem; }
+  .playlist-item .pl-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .qq-playlist {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-flow: column;
+    grid-template-rows: repeat(4, auto);
+    gap: 3px;
+    margin-top: 2px;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+
+  .qq-player-hint {
+    text-align: center;
+    padding: 8px 0;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  .qq-player-hint input {
+    width: 100%;
+    padding: 6px 8px;
     border-radius: 8px;
     border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: #fff;
+    font-size: 0.75rem;
+    font-family: inherit;
+    outline: none;
+    margin-top: 6px;
+    box-sizing: border-box;
+  }
+
+  .qq-player-hint input:focus { border-color: rgba(108,92,231,0.3); }
+  .qq-player-hint .qq-btn {
+    margin-top: 6px;
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(108,92,231,0.3);
+    background: rgba(108,92,231,0.15);
+    color: #c4b5fd;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .qq-player-hint .qq-btn:hover { background: rgba(108,92,231,0.25); }
+
+  #neteaseToggleBtn {
+    margin-left: auto;
+    flex: 0 0 auto;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
     background: transparent;
     color: var(--text-secondary);
+    font-size: 0.7rem;
     cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.82rem;
     font-family: inherit;
+    transition: all 0.2s ease;
+    line-height: 1;
   }
 
-  .game-tab:hover { border-color: rgba(255,255,255,0.15); color: #fff; }
-  .game-tab.active { background: rgba(108,92,231,0.2); border-color: var(--primary); color: #fff; }
-  .game-score { font-size: 0.85rem; color: var(--text-secondary); text-align: center; flex-shrink: 0; margin-bottom: 0.5rem; }
+  #neteaseToggleBtn:hover { border-color: rgba(255,255,255,0.15); color: #fff; }
 
-  .game-canvas-wrap {
-    flex: 1;
-    border-radius: 16px;
+  #neteaseSection {
     overflow: hidden;
-    background: #0d0d24;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 0;
+    transition: max-height 0.3s ease;
+    max-height: 600px;
   }
 
-  .game-canvas-wrap canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
-
-  .game-overlay {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,0.65);
-    gap: 1rem;
-    border-radius: 16px;
+  #neteaseSection.collapsed { max-height: 0; }
+  #localPlayerContent {
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+    max-height: 500px;
+  }
+  #localPlayerContent.collapsed {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
   }
 
-  .game-overlay .btn-row { display: flex; gap: 0.8rem; align-items: center; }
-  .game-overlay button {
-    padding: 10px 28px; border-radius: 8px; border: none;
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    color: #fff; font-size: 0.95rem; cursor: pointer;
-    transition: all 0.3s ease; font-family: inherit;
-  }
-
-  .game-overlay button:hover { transform: scale(1.06); box-shadow: 0 6px 24px rgba(108,92,231,0.4); }
-  .game-overlay .tips-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); }
-  .game-overlay .tips-btn:hover { background: rgba(255,255,255,0.12); box-shadow: none; }
-
-  .game-tips-panel {
-    margin-top: 0.8rem;
-    padding: 0.8rem 1.2rem;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 10px;
-    font-size: 0.82rem;
-    color: var(--text-secondary);
-    line-height: 1.8;
-    max-width: 320px;
+  #visContainer {
     display: none;
+    position: relative;
+    height: 120px;
+    border-radius: 12px;
+    margin-bottom: 6px;
+    overflow: hidden;
+    background: #050508;
   }
-
-  .game-tips-panel.show { display: block; }
-
-  .game-tips-panel kbd {
-    display: inline-block;
-    padding: 1px 7px;
-    border-radius: 4px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.1);
+  #visContainer.active { display: block; }
+  #visCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #visCloseBtn {
+    position: absolute;
+    top: 4px; right: 4px;
+    z-index: 10;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.5);
+    color: rgba(255,255,255,0.6);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+    transition: all 0.2s ease;
     font-family: inherit;
-    font-size: 0.78rem;
-    color: #fff;
   }
-
-  .game-overlay.hidden { display: none; }
-
-  .game-overlay h3 {
-    font-size: 1.4rem;
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .game-overlay p { color: var(--text-secondary); font-size: 0.9rem; }
-  .game-controls-hint { font-size: 0.72rem; color: rgba(255,255,255,0.2); text-align: center; flex-shrink: 0; margin-top: 0.3rem; }
+  #visCloseBtn:hover { background: rgba(255,255,255,0.15); color: #fff; }
 
   @media (max-width: 768px) {
-    .subpage-inner { padding: 5rem 1.2rem 3rem; }
-    .profile-section { grid-template-columns: 1fr; }
-    .avatar-frame { margin: 0 auto; }
-    .game-btn { width: 50px; height: 50px; font-size: 1.1rem; bottom: 20px; left: 20px; }
-    .game-btn-label { display: none; }
-    .game-modal-content { padding: 1rem; width: 96vw; height: 90vh; }
-    .game-tab { padding: 5px 12px; font-size: 0.75rem; }
+    .top-right-widgets { width: 200px; right: 12px; top: 12px; }
+    .toolbar { top: 12px; left: 12px; }
+    .toolbar-grid { max-width: 160px; }
+    .toolbar-grid { grid-template-columns: repeat(2, 1fr); }
+    .cal-day .lunar { display: none; }
+    .music-controls-panel { padding: 8px; }
   }
 </style>
 </head>
@@ -751,7 +1089,6 @@
 
 <!-- ===== Dynamic Page Loader ===== -->
 <div id="subpage" class="page subpage">
-  <button class="back-btn" onclick="navigateTo('home')">←</button>
   <div class="subpage-inner" id="pageContent"></div>
 </div>
 
@@ -786,6 +1123,93 @@
   </div>
 </div>
 
+<!-- ===== QQ Music Modal ===== -->
+<!-- ===== Toolbar (Top-Left) ===== -->
+<div class="toolbar">
+  <div class="toolbar-tabs" id="toolbarTabs">
+    <button class="toolbar-tab active" data-cat="official" onclick="switchToolbarCat('official')">🔧 官方网站</button>
+    <button class="toolbar-tab" data-cat="usually" onclick="switchToolbarCat('usually')">🛠 常用工具</button>
+    <button class="toolbar-tab" data-cat="useful" onclick="switchToolbarCat('useful')">⭐ 好用的工具</button>
+  </div>
+  <div class="toolbar-grid" id="toolbarGrid"></div>
+</div>
+
+  <button class="back-btn" id="toolbarBackBtn" onclick="navigateTo('home')">←</button>
+
+<!-- ===== Top-Right Widgets ===== -->
+<div class="top-right-widgets">
+
+  <!-- Music Player (left of calendar) -->
+  <div class="music-controls-panel">
+    <div class="music-tabs">
+      <button class="music-tab" data-panel="qq" onclick="switchMusicTab('qq')">网易云</button>
+      <button class="music-tab active" data-panel="local" onclick="switchMusicTab('local')">本地</button>
+      <button id="neteaseToggleBtn" onclick="toggleNeteaseContent()" title="收起/展开">▲</button>
+    </div>
+    <div id="visContainer"><canvas id="visCanvas"></canvas><button id="visCloseBtn" onclick="hideAdvancedVis()">✕</button></div>
+    <div id="localPlayer">
+      <div id="localPlayerContent">
+      <div class="music-info">
+        <div class="song-name" id="localSongName">未选择歌曲</div>
+        <div class="song-artist" id="localSongArtist">请将 MP3 放入 assets/audio/</div>
+      </div>
+      <div class="music-progress">
+        <span class="time" id="localTime">0:00</span>
+        <div class="bar" id="localProgressBar" onclick="localSeek(event)">
+          <div class="fill" id="localProgressFill"></div>
+          <div class="thumb"></div>
+        </div>
+        <span class="time" id="localDuration">0:00</span>
+      </div>
+      <div class="music-controls">
+        <button onclick="localPrev()">⏮</button>
+        <button class="play-btn" id="localPlayBtn" onclick="localTogglePlay()">▶</button>
+        <button onclick="localNext()">⏭</button>
+      </div>
+      <div class="music-volume">
+        <span class="vol-icon">🔊</span>
+        <div class="vol-bar" onclick="localSetVolume(event)">
+          <div class="fill" id="localVolFill" style="width:70%"></div>
+        </div>
+      </div>
+      <div class="music-playlist" id="localPlaylist"></div>
+      </div>
+    </div>
+    <div id="neteaseSection">
+      <div class="qq-player-hint">
+        <div>请输入网易云歌单 ID 或链接</div>
+        <input type="text" id="qqUrlInput" placeholder="例如: 3778678" />
+        <button class="qq-btn" onclick="loadQQMusic()" style="margin-right:4px">加载</button>
+      </div>
+      <div class="qq-playlist">
+        <div class="playlist-item" onclick="loadQQPreset('19723756')"><span class="pl-icon">💥</span><span class="pl-name">飙升榜</span></div>
+        <div class="playlist-item" onclick="loadQQPreset('3778678')"><span class="pl-icon">🔥</span><span class="pl-name">热歌榜</span></div>
+        <div class="playlist-item" onclick="loadQQPreset('3779629')"><span class="pl-icon">📈</span><span class="pl-name">新歌榜</span></div>
+        <div class="playlist-item" onclick="loadQQPreset('2884035')"><span class="pl-icon">🎤</span><span class="pl-name">原创榜</span></div>
+        <div class="playlist-item" onclick="loadQQPreset('17876994733')"><span class="pl-icon">🎮</span><span class="pl-name">游戏歌单</span></div>
+        <div class="playlist-item" onclick="loadQQPreset('17990594711')"><span class="pl-icon">🎹</span><span class="pl-name">纯音乐</span></div>
+      </div>
+      <div id="neteasePlayerContainer" style="margin-top:6px"></div>
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="calendar-widget">
+    <div class="cal-header">
+      <button onclick="calPrevMonth()">‹</button>
+      <span class="cal-title" id="calTitle">2026年6月</span>
+      <button onclick="calNextMonth()">›</button>
+    </div>
+    <div class="cal-weekdays">
+      <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+    </div>
+    <div class="cal-days" id="calDays"></div>
+    <button class="cal-today-btn" onclick="calGoToday()">回到今天</button>
+  </div>
+
+</div>
+
+<script src="config/tools.js"></script>
 <script>
   // ===== Particle System =====
   const canvas = document.getElementById('particle-canvas');
@@ -908,7 +1332,7 @@
         <div class="info-item"><span class="label">职位</span><span class="value">全栈开发者 / AI 爱好者</span></div>
         <div class="info-item"><span class="label">地点</span><span class="value">中国 · 成都</span></div>
         <div class="info-item"><span class="label">邮箱</span><span class="value">linlizi66@163.com</span></div>
-        <div class="info-item"><span class="label">GitHub</span><span class="value">github.com/linlizi</span></div>
+        <div class="info-item"><span class="label">GitHub</span><span class="value">llz8.github.io</span></div>
       </div>
       <div class="skill-tags">
         <span class="skill-tag">Java</span><span class="skill-tag">Python</span>
@@ -1002,13 +1426,16 @@
     const current = document.querySelector('.page.active');
     if (current) { current.classList.remove('active'); current.classList.add('exit'); setTimeout(() => current.classList.remove('exit'), 600); }
 
+    const backBtn = document.getElementById('toolbarBackBtn');
     if (pageId === 'home') {
       const home = document.getElementById('home');
+      backBtn && backBtn.classList.remove('visible');
       setTimeout(() => { home.classList.add('active'); home.scrollTop = 0; isNavigating = false; }, 50);
     } else {
       const sub = document.getElementById('subpage');
       const content = document.getElementById('pageContent');
 
+      backBtn && backBtn.classList.add('visible');
       if (pageContentStore[pageId]) {
         content.innerHTML = pageContentStore[pageId];
         setTimeout(() => { sub.classList.add('active'); sub.scrollTop = 0; }, 50);
@@ -1539,6 +1966,747 @@
   }
 
   window.addEventListener('resize', () => { if (gameModalOpen) resizeGameCanvas(); });
+
+  // ===================================================================
+  // Toolbar, Calendar & Music Player
+  // ===================================================================
+
+  // ---------- Toolbar ----------
+  function renderToolbar(cat) {
+    const grid = document.getElementById('toolbarGrid');
+    grid.innerHTML = '';
+    const tools = cat === 'usually' ? TOOLS_USUALLY : (cat === 'useful' ? TOOLS_USEFUL : TOOLS_OFFICIAL);
+    for (const t of tools) {
+      const a = document.createElement('a');
+      a.className = 'tool-card';
+      a.href = t.url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.innerHTML = '<span class="icon">' + t.icon + '</span><span class="name">' + t.name + '</span>';
+      grid.appendChild(a);
+    }
+  }
+
+  function switchToolbarCat(cat) {
+    const grid = document.getElementById('toolbarGrid');
+    const isActive = document.querySelector('.toolbar-tab.active');
+    if (isActive && isActive.dataset.cat === cat) {
+      // Clicking same tab -> toggle collapse
+      grid.classList.toggle('collapsed');
+    } else {
+      // Switch to new tab
+      grid.classList.remove('collapsed');
+      document.querySelectorAll('.toolbar-tab').forEach(function(t) {
+        t.classList.toggle('active', t.dataset.cat === cat);
+      });
+      renderToolbar(cat);
+    }
+  }
+
+  let currentToolbarCat = 'official';
+  if (typeof TOOLS_OFFICIAL !== 'undefined') renderToolbar('official');
+
+  // ---------- Calendar (Lunar + Holidays) ----------
+
+  // Lunar year data 1900-2100
+  // Each entry: monthDays(12 digits, 1=30, 0=29) + leapMonth(2 digits) + leapDays(1 digit: 1=30, 0=29)
+  const lunarInfo = [
+    0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2, //1900-1909
+    0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977, //1910-1919
+    0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970, //1920-1929
+    0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950, //1930-1939
+    0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557, //1940-1949
+    0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0, //1950-1959
+    0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0, //1960-1969
+    0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6, //1970-1979
+    0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570, //1980-1989
+    0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x05ac0,0x0ab60,0x096d5,0x092e0, //1990-1999
+    0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5, //2000-2009
+    0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930, //2010-2019
+    0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530, //2020-2029
+    0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45, //2030-2039
+    0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0, //2040-2049
+    0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06aa0,0x1a6c4,0x0aae0, //2050-2059
+    0x092e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4, //2060-2069
+    0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0, //2070-2079
+    0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160, //2080-2089
+    0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a4d0,0x0d150,0x0f252, //2090-2099
+    0x0d520 //2100
+  ];
+
+  // Heavenly Stems & Earthly Branches (for GanZhi year)
+  const HeavenlyStems = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+  const EarthlyBranches = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+  const Animals = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
+
+  // Lunar month names
+  const LunarMonthNames = ['正','二','三','四','五','六','七','八','九','十','冬','腊'];
+  const LunarDayNames = ['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十',
+    '十一','十二','十三','十四','十五','十六','十七','十八','十九','二十',
+    '廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+
+  // Chinese statutory holidays (solar date - some are fixed, some vary by lunar)
+  const SOLAR_HOLIDAYS = {
+    '0101': { name: '元旦', type: 'holiday' },
+    '0214': { name: '情人节', type: 'non' },
+    '0308': { name: '妇女节', type: 'non' },
+    '0312': { name: '植树节', type: 'non' },
+    '0501': { name: '劳动节', type: 'holiday' },
+    '0601': { name: '儿童节', type: 'non' },
+    '0701': { name: '建党节', type: 'non' },
+    '0801': { name: '建军节', type: 'non' },
+    '0910': { name: '教师节', type: 'non' },
+    '1001': { name: '国庆节', type: 'holiday' },
+  };
+
+  // Lunar holidays - computed
+  const LUNAR_HOLIDAYS = {
+    '0101': { name: '春节', type: 'holiday' },
+    '0102': { name: '初二', type: 'holiday' },
+    '0103': { name: '初三', type: 'holiday' },
+    '0115': { name: '元宵节', type: 'non' },
+    '0505': { name: '端午节', type: 'holiday' },
+    '0707': { name: '七夕节', type: 'non' },
+    '0715': { name: '中元节', type: 'non' },
+    '0815': { name: '中秋节', type: 'holiday' },
+    '0909': { name: '重阳节', type: 'non' },
+    '1208': { name: '腊八节', type: 'non' },
+    '1230': { name: '除夕', type: 'holiday' },
+  };
+
+  // Qingming Festival (solar, around Apr 4-5)
+  function getQingmingDate(year) {
+    // Simplified: Apr 4 or 5
+    return { m: 4, d: year % 4 === 0 ? 4 : 5 };
+  }
+
+  function lunarYearDays(y) {
+    let sum = 348; // 12 * 29
+    for (let i = 0x8000; i > 0x8; i >>= 1) { sum += (lunarInfo[y - 1900] & i) ? 1 : 0; }
+    return sum + leapDays(y);
+  }
+
+  function leapMonth(y) { return lunarInfo[y - 1900] & 0xf; }
+
+  function leapDays(y) {
+    if (!leapMonth(y)) return 0;
+    return (lunarInfo[y - 1900] & 0x10000) ? 30 : 29;
+  }
+
+  function monthDays(y, m) {
+    return (lunarInfo[y - 1900] & (0x10000 >> m)) ? 30 : 29;
+  }
+
+  function lunarYear(y) {
+    const gan = (y - 4) % 10;
+    const zhi = (y - 4) % 12;
+    return { gan: HeavenlyStems[gan >= 0 ? gan : gan + 10], zhi: EarthlyBranches[zhi >= 0 ? zhi : zhi + 12], animal: Animals[zhi >= 0 ? zhi : zhi + 12] };
+  }
+
+  function solarDateStr(m, d) {
+    return String(m).padStart(2, '0') + String(d).padStart(2, '0');
+  }
+
+  function solarToLunar(year, month, day) {
+    const baseDate = new Date(1900, 0, 31);
+    const target = new Date(year, month - 1, day);
+    let offset = Math.floor((target - baseDate) / 86400000);
+    if (offset < 0) return null;
+
+    let ly = 1900;
+    for (; ly < 2101; ly++) {
+      const dy = lunarYearDays(ly);
+      if (offset < dy) break;
+      offset -= dy;
+    }
+    if (ly > 2100) return null;
+
+    const leap = leapMonth(ly);
+    let isLeap = false;
+    let lm = 1;
+
+    for (let j = 1; j <= 12; j++) {
+      if (leap > 0 && j === leap + 1 && !isLeap) {
+        const ld = leapDays(ly);
+        if (offset < ld) { isLeap = true; lm = leap; break; }
+        offset -= ld;
+        isLeap = true;
+        j--;
+      } else {
+        isLeap = false;
+        const md = monthDays(ly, j);
+        if (offset < md) { lm = j; break; }
+        offset -= md;
+      }
+    }
+
+    return { year: ly, month: lm, day: offset + 1, isLeap };
+  }function getLunarDayName(day) {
+    return LunarDayNames[day - 1] || day + '日';
+  }
+
+  let calYear = new Date().getFullYear();
+  let calMonth = new Date().getMonth() + 1;
+
+  function renderCalendar(y, m) {
+    const firstDay = new Date(y, m - 1, 1).getDay();
+    const daysInMonth = new Date(y, m, 0).getDate();
+
+    document.getElementById('calTitle').textContent = `${y}年${m}月`;
+
+    const grid = document.getElementById('calDays');
+    grid.innerHTML = '';
+
+    const today = new Date();
+    const isTodayMonth = today.getFullYear() === y && today.getMonth() === m - 1;
+    const todayD = today.getDate();
+
+    // Previous month tail
+    const prevDate = new Date(y, m - 1, 0);
+    const prevY = prevDate.getFullYear();
+    const prevM = prevDate.getMonth() + 1;
+    const prevDays = prevDate.getDate();
+    for (let i = firstDay - 1; i >= 0; i--) {
+      const d = prevDays - i;
+      grid.appendChild(createDayCell(prevY, prevM, d, true));
+    }
+
+    // Current month
+    for (let d = 1; d <= daysInMonth; d++) {
+      const cell = createDayCell(y, m, d, false);
+      if (isTodayMonth && d === todayD) cell.classList.add('today');
+      grid.appendChild(cell);
+    }
+
+    // Next month head
+    const nextDate = new Date(y, m, 1);
+    const nextY = nextDate.getFullYear();
+    const nextM = nextDate.getMonth() + 1;
+    const remaining = 42 - grid.children.length;
+    for (let d = 1; d <= remaining; d++) {
+      grid.appendChild(createDayCell(nextY, nextM, d, true));
+    }
+  }
+
+  function createDayCell(y, m, d, isOther) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-day';
+
+    const lunar = solarToLunar(y, m, d);
+    let lunarStr = '';
+    let holidayInfo = null;
+
+    if (lunar) {
+      const lmStr = String(Math.abs(lunar.month)).padStart(2, '0');
+      const ldStr = String(lunar.day).padStart(2, '0');
+      const lKey = lmStr + ldStr;
+
+      lunarStr = lunar.day === 1 ? LunarMonthNames[Math.abs(lunar.month) - 1] + '月' : getLunarDayName(lunar.day);
+
+      if (LUNAR_HOLIDAYS[lKey]) holidayInfo = LUNAR_HOLIDAYS[lKey];
+
+      if (m === getQingmingDate(y).m && d === getQingmingDate(y).d) {
+        holidayInfo = { name: '清明节', type: 'holiday' };
+      }
+    }
+
+    const sKey = String(m).padStart(2, '0') + String(d).padStart(2, '0');
+    if (!holidayInfo && SOLAR_HOLIDAYS[sKey]) holidayInfo = SOLAR_HOLIDAYS[sKey];
+
+    const dow = new Date(y, m - 1, d).getDay();
+    if (holidayInfo && holidayInfo.type === 'holiday') cell.classList.add('holiday');
+    else if (dow === 0 || dow === 6) cell.classList.add('weekend');
+    if (isOther) cell.classList.add('other-month');
+
+    const solarSpan = document.createElement('span');
+    solarSpan.className = 'solar';
+    solarSpan.textContent = holidayInfo ? holidayInfo.name : d;
+
+    const lunarSpan = document.createElement('span');
+    lunarSpan.className = 'lunar';
+    lunarSpan.textContent = lunarStr;
+
+    cell.appendChild(solarSpan);
+    cell.appendChild(lunarSpan);
+    return cell;
+  }
+
+  function calPrevMonth() {
+    if (calMonth <= 1) { calMonth = 12; calYear--; }
+    else calMonth--;
+    renderCalendar(calYear, calMonth);
+  }
+
+  function calNextMonth() {
+    if (calMonth >= 12) { calMonth = 1; calYear++; }
+    else calMonth++;
+    renderCalendar(calYear, calMonth);
+  }
+
+  function calGoToday() {
+    const now = new Date();
+    calYear = now.getFullYear();
+    calMonth = now.getMonth() + 1;
+    renderCalendar(calYear, calMonth);
+  }
+
+  // Init calendar
+  renderCalendar(calYear, calMonth);
+
+  // ---------- Music Player ----------
+
+  let localAudio = null;
+  let localPlaylist = [];
+  let localIndex = 0;
+  let localPlaying = false;
+
+  function switchMusicTab(tab) {
+    document.querySelectorAll('.music-tab').forEach(t => t.classList.toggle('active', t.dataset.panel === tab));
+    const local = document.getElementById('localPlayer');
+    const netease = document.getElementById('neteaseSection');
+    if (local) local.style.display = tab === 'local' ? '' : 'none';
+    if (netease) netease.style.display = tab === 'qq' ? '' : 'none';
+    const btn = document.getElementById('neteaseToggleBtn');
+    if (!btn) return;
+    if (tab === 'local') {
+      const content = document.getElementById('localPlayerContent');
+      btn.textContent = content && content.classList.contains('collapsed') ? '▼' : '▲';
+    } else {
+      btn.textContent = netease && netease.classList.contains('collapsed') ? '▼' : '▲';
+    }
+  }
+
+  // Scan local audio files
+  async function scanLocalMusic() {
+    localPlaylist = [{ name: 'bgm', url: 'assets/audio/bgm.MP3' }];
+    renderLocalPlaylist();
+  }
+
+  function addLocalSong() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'audio/mp3,audio/*';
+    input.onchange = (e) => {
+      const files = Array.from(e.target.files);
+      for (const file of files) {
+        const url = URL.createObjectURL(file);
+        const name = file.name.replace(/\.[^.]+$/, '');
+        localPlaylist.push({ name, url });
+      }
+      renderLocalPlaylist();
+      if (!localAudio && localPlaylist.length > 0) playLocalSong(0);
+    };
+    input.click();
+  }
+
+  function renderLocalPlaylist() {
+    const playlist = document.getElementById('localPlaylist');
+    playlist.innerHTML = '';
+    for (let i = 0; i < localPlaylist.length; i++) {
+      const item = document.createElement('div');
+      item.className = 'playlist-item' + (i === localIndex ? ' active' : '');
+      item.innerHTML = `<span class="pl-icon">🎵</span><span class="pl-name">${localPlaylist[i].name}</span>`;
+      item.onclick = () => playLocalSong(i);
+      playlist.appendChild(item);
+    }
+    // "Add local music" button
+    const addBtn = document.createElement('div');
+    addBtn.className = 'playlist-item';
+    addBtn.style.borderTop = '1px solid rgba(255,255,255,0.04)';
+    addBtn.style.marginTop = '4px';
+    addBtn.style.paddingTop = '6px';
+    addBtn.style.cursor = 'pointer';
+    addBtn.innerHTML = '<span class="pl-icon">＋</span><span class="pl-name">添加本地音乐</span>';
+    addBtn.onclick = addLocalSong;
+    playlist.appendChild(addBtn);
+  }
+
+  function playLocalSong(idx) {
+    if (idx < 0 || idx >= localPlaylist.length) return;
+    localIndex = idx;
+    if (localAudio) { localAudio.pause(); localAudio = null; }
+
+    const song = localPlaylist[idx];
+    localAudio = new Audio(song.url);
+    localAudio.volume = 0.7;
+    localAudio.onloadedmetadata = () => {
+      document.getElementById('localDuration').textContent = formatTime(localAudio.duration);
+    };
+    localAudio.ontimeupdate = updateLocalProgress;
+    localAudio.onended = localNext;
+    localAudio.play().then(() => {
+      localPlaying = true;
+      document.getElementById('localPlayBtn').textContent = '⏸';
+      document.getElementById('localSongName').textContent = song.name;
+      document.getElementById('localSongArtist').textContent = '本地音乐';
+    }).catch(() => {});
+    renderLocalPlaylist();
+    document.getElementById('localVolFill').style.width = (localAudio.volume * 100) + '%';
+  }
+
+  function localTogglePlay() {
+    if (!localAudio) { if (localPlaylist.length > 0) playLocalSong(0); return; }
+    if (localPlaying) { localAudio.pause(); localPlaying = false; document.getElementById('localPlayBtn').textContent = '▶'; }
+    else { localAudio.play(); localPlaying = true; document.getElementById('localPlayBtn').textContent = '⏸'; }
+  }
+
+  function localNext() {
+    if (localPlaylist.length === 0) return;
+    playLocalSong((localIndex + 1) % localPlaylist.length);
+  }
+
+  function localPrev() {
+    if (localPlaylist.length === 0) return;
+    playLocalSong((localIndex - 1 + localPlaylist.length) % localPlaylist.length);
+  }
+
+  function updateLocalProgress() {
+    if (!localAudio) return;
+    document.getElementById('localTime').textContent = formatTime(localAudio.currentTime);
+    document.getElementById('localProgressFill').style.width = (localAudio.currentTime / localAudio.duration * 100) + '%';
+  }
+
+  function localSeek(e) {
+    if (!localAudio || !localAudio.duration) return;
+    const bar = e.currentTarget;
+    const rect = bar.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    localAudio.currentTime = pct * localAudio.duration;
+  }
+
+  function localSetVolume(e) {
+    if (!localAudio) return;
+    const bar = e.currentTarget;
+    const rect = bar.getBoundingClientRect();
+    const vol = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    localAudio.volume = vol;
+    document.getElementById('localVolFill').style.width = (vol * 100) + '%';
+  }
+
+  function formatTime(sec) {
+    if (!sec || isNaN(sec)) return '0:00';
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  // NetEase Cloud Music
+  function stopLocalMusic() {
+    if (localAudio) { localAudio.pause(); localAudio = null; localPlaying = false; document.getElementById('localPlayBtn').textContent = '▶'; }
+  }
+
+  function loadQQMusic() {
+    stopLocalMusic();
+    const input = document.getElementById('qqUrlInput').value.trim();
+    if (!input) return;
+
+    let id;
+    const idMatch = input.match(/(?:playlist|toplist)\?id=(\d+)/);
+    if (idMatch) id = idMatch[1];
+    else if (/^\d+$/.test(input)) id = input;
+
+    if (id) { embedNetease(id); showAdvancedVis(); }
+  }
+
+  function loadQQPreset(id) {
+    stopLocalMusic();
+    const input = document.getElementById('qqUrlInput');
+    input.value = id;
+    embedNetease(id);
+    showAdvancedVis();
+  }
+
+  function toggleNeteaseContent() {
+    const btn = document.getElementById('neteaseToggleBtn');
+    const tab = document.querySelector('.music-tab.active');
+    const activePanel = tab ? tab.dataset.panel : 'qq';
+    if (activePanel === 'local') {
+      const content = document.getElementById('localPlayerContent');
+      if (!content) return;
+      const isCollapsed = content.classList.toggle('collapsed');
+      if (btn) btn.textContent = isCollapsed ? '▼' : '▲';
+    } else {
+      const section = document.getElementById('neteaseSection');
+      if (!section) return;
+      const isCollapsed = section.classList.toggle('collapsed');
+      if (btn) btn.textContent = isCollapsed ? '▼' : '▲';
+    }
+  }
+
+  function embedNetease(id) {
+    const container = document.getElementById('neteasePlayerContainer');
+    container.innerHTML = `<iframe src="https://music.163.com/outchain/player?type=0&id=${id}&auto=1&height=430" allow="autoplay *; encrypted-media *" style="width:100%;height:430px;border:none;border-radius:12px"></iframe>`;
+  }
+
+  // ===================================================================
+  // Vinyl Record Visualizer (Canvas 2D)
+  // ===================================================================
+  const visCanvas = document.getElementById('visCanvas');
+  const vctx = visCanvas.getContext('2d');
+  let visActive = false;
+  let visRaf = null;
+  let visTime = 0;
+  let visSimData = new Uint8Array(64).fill(128);
+  let blueRings = [];
+  let lastLargeTrigger = false;
+
+  function resizeVisCanvas() {
+    const container = document.getElementById('visContainer');
+    const w = container.clientWidth || 240;
+    const h = 120;
+    visCanvas.width = w * 2;
+    visCanvas.height = h * 2;
+    visCanvas.style.width = w + 'px';
+    visCanvas.style.height = h + 'px';
+  }
+  window.addEventListener('resize', resizeVisCanvas);
+
+  function updateSimData() {
+    visTime += 0.025;
+    const beat = Math.pow(Math.sin(visTime * 4.3) * 0.5 + 0.5, 3);
+    for (let i = 0; i < visSimData.length; i++) {
+      const freq = i / visSimData.length;
+      let val;
+      if (freq < 0.1) val = 60 + 160 * beat + 50 * Math.sin(visTime * (2.5 + i * 0.7));
+      else if (freq < 0.25) val = 50 + 90 * Math.sin(visTime * (4 + freq * 12)) + 40 * Math.sin(visTime * 6.3 + i * 0.5);
+      else if (freq < 0.5) val = 40 + 80 * Math.sin(visTime * (7 + freq * 8)) + 30 * Math.sin(visTime * 10.1 + i);
+      else val = 20 + 60 * Math.sin(visTime * (11 + freq * 5)) + 25 * Math.sin(visTime * 14.7 + i * 1.5);
+      visSimData[i] = visSimData[i] * 0.65 + Math.min(255, Math.max(0, val)) * 0.35;
+    }
+  }
+
+  function drawVinylRecord(cx, cy, radius, rotation, bassVal, largeShake) {
+    const shakeX = bassVal * 2 * (Math.random() - 0.5);
+    const shakeY = bassVal * 2.5 * (Math.random() - 0.5) + largeShake;
+
+    vctx.save();
+    vctx.translate(cx + shakeX, cy + shakeY);
+    vctx.rotate(rotation);
+
+    // Outer rim
+    vctx.beginPath();
+    vctx.arc(0, 0, radius + 4, 0, Math.PI * 2);
+    vctx.fillStyle = '#111';
+    vctx.fill();
+
+    // Main record body
+    const bodyGrad = vctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+    bodyGrad.addColorStop(0, '#111');
+    bodyGrad.addColorStop(0.25, '#0a0a0a');
+    bodyGrad.addColorStop(0.6, '#080808');
+    bodyGrad.addColorStop(0.85, '#0c0c0c');
+    bodyGrad.addColorStop(1, '#111');
+    vctx.beginPath();
+    vctx.arc(0, 0, radius, 0, Math.PI * 2);
+    vctx.fillStyle = bodyGrad;
+    vctx.fill();
+
+    // Grooves
+    for (let r = radius * 0.32; r < radius * 0.96; r += 3.5) {
+      vctx.beginPath();
+      vctx.arc(0, 0, r, 0, Math.PI * 2);
+      vctx.strokeStyle = `rgba(255,255,255,${0.025 + Math.sin(r * 0.5) * 0.01})`;
+      vctx.lineWidth = 0.4;
+      vctx.stroke();
+    }
+
+    // Hypnotic spiral (single arm, logarithmic, fills entire canvas)
+    const spiralSteps = 500;
+    const spiralTurns = 5;
+    const spiralMaxAngle = spiralTurns * Math.PI * 2;
+    const spiralInner = 4;
+    const spiralOuter = Math.sqrt(cx * cx + cy * cy);
+    const spiralB = Math.log(spiralOuter / spiralInner) / spiralMaxAngle;
+
+    vctx.beginPath();
+    for (let i = 0; i <= spiralSteps; i++) {
+      const t = i / spiralSteps;
+      const angle = t * spiralMaxAngle;
+      const r = spiralInner * Math.exp(spiralB * t * spiralMaxAngle);
+      const x = Math.cos(angle) * r;
+      const y = Math.sin(angle) * r;
+      if (i === 0) vctx.moveTo(x, y);
+      else vctx.lineTo(x, y);
+    }
+    vctx.strokeStyle = 'rgba(220,210,255,0.18)';
+    vctx.lineWidth = 6;
+    vctx.lineCap = 'round';
+    vctx.stroke();
+
+    // Glow layer
+    vctx.shadowColor = 'rgba(160,140,255,0.3)';
+    vctx.shadowBlur = 12;
+    vctx.strokeStyle = 'rgba(180,160,240,0.08)';
+    vctx.lineWidth = 10;
+    vctx.stroke();
+    vctx.shadowBlur = 0;
+
+    // Specular highlight arc
+    vctx.save();
+    vctx.beginPath();
+    vctx.arc(0, 0, radius, 0, Math.PI * 2);
+    vctx.clip();
+    const hlGrad = vctx.createLinearGradient(-radius, -radius, radius, radius);
+    hlGrad.addColorStop(0, 'rgba(255,255,255,0.04)');
+    hlGrad.addColorStop(0.45, 'rgba(255,255,255,0)');
+    hlGrad.addColorStop(0.55, 'rgba(255,255,255,0)');
+    hlGrad.addColorStop(1, 'rgba(255,255,255,0.02)');
+    vctx.fillStyle = hlGrad;
+    vctx.fillRect(-radius, -radius, radius * 2, radius * 2);
+    vctx.restore();
+
+    // Center label
+    const labelR = radius * 0.26;
+    const lGrad = vctx.createRadialGradient(0, 0, 0, 0, 0, labelR);
+    lGrad.addColorStop(0, '#18101f');
+    lGrad.addColorStop(1, '#0d0812');
+    vctx.beginPath();
+    vctx.arc(0, 0, labelR, 0, Math.PI * 2);
+    vctx.fillStyle = lGrad;
+    vctx.fill();
+
+    // Center hole
+    vctx.beginPath();
+    vctx.arc(0, 0, labelR * 0.15, 0, Math.PI * 2);
+    vctx.fillStyle = '#050508';
+    vctx.fill();
+
+    // Music note with iridescent border
+    const noteSize = radius * 0.38;
+    vctx.font = `bold ${noteSize}px serif`;
+    vctx.textAlign = 'center';
+    vctx.textBaseline = 'middle';
+
+    const hueShift = (visTime * 40) % 360;
+
+    // Outer glow
+    vctx.shadowColor = `hsla(${hueShift}, 100%, 55%, 0.7)`;
+    vctx.shadowBlur = 18;
+
+    // Stroke (iridescent border)
+    const iGrad = vctx.createLinearGradient(-noteSize * 0.5, -noteSize * 0.5, noteSize * 0.5, noteSize * 0.5);
+    iGrad.addColorStop(0, `hsl(${hueShift}, 100%, 65%)`);
+    iGrad.addColorStop(0.3, `hsl(${(hueShift + 80) % 360}, 100%, 60%)`);
+    iGrad.addColorStop(0.6, `hsl(${(hueShift + 160) % 360}, 100%, 65%)`);
+    iGrad.addColorStop(1, `hsl(${(hueShift + 260) % 360}, 100%, 60%)`);
+
+    vctx.strokeStyle = iGrad;
+    vctx.lineWidth = 3;
+    vctx.strokeText('♪', 0, 2);
+
+    // Fill
+    vctx.shadowBlur = 10;
+    vctx.fillStyle = iGrad;
+    vctx.fillText('♪', 0, 2);
+
+    vctx.shadowBlur = 0;
+    vctx.restore();
+  }
+
+  function drawBlueRing(cx, cy, ring) {
+    vctx.beginPath();
+    vctx.arc(cx, cy, ring.r, 0, Math.PI * 2);
+    vctx.strokeStyle = `rgba(60,130,255,${ring.alpha * 0.75})`;
+    vctx.lineWidth = 2.5 * ring.alpha;
+    vctx.shadowColor = `rgba(50,120,255,${ring.alpha})`;
+    vctx.shadowBlur = 22;
+    vctx.stroke();
+
+    // Inner echo
+    if (ring.r > 30) {
+      vctx.beginPath();
+      vctx.arc(cx, cy, ring.r * 0.88, 0, Math.PI * 2);
+      vctx.strokeStyle = `rgba(100,180,255,${ring.alpha * 0.3})`;
+      vctx.lineWidth = 1.2 * ring.alpha;
+      vctx.shadowColor = `rgba(100,180,255,${ring.alpha * 0.4})`;
+      vctx.shadowBlur = 12;
+      vctx.stroke();
+    }
+    vctx.shadowBlur = 0;
+  }
+
+  function drawVisFrame() {
+    if (!visActive) return;
+    const W = visCanvas.width;
+    const H = visCanvas.height;
+    const cx = W / 2;
+    const cy = H / 2;
+
+    // Clear
+    vctx.fillStyle = '#050508';
+    vctx.fillRect(0, 0, W, H);
+
+    updateSimData();
+
+    const bassVal = visSimData[0] / 255;
+    const recordR = Math.min(W, H) * 0.38;
+
+    // Rotation
+    const rotation = visTime * -0.25;
+
+    // Large vibration (every ~4s)
+    const largeCycle = Math.sin(visTime * 1.5);
+    const isLarge = largeCycle > 0.88;
+    const largeShake = isLarge ? (largeCycle - 0.88) * 18 : 0;
+
+    // Spawn blue ring on large vibration
+    if (isLarge && !lastLargeTrigger) {
+      blueRings.push({ r: recordR + 6, alpha: 1 });
+    }
+    lastLargeTrigger = isLarge;
+
+    // Draw blue rings (behind record)
+    for (let i = blueRings.length - 1; i >= 0; i--) {
+      const ring = blueRings[i];
+      ring.r += 2.2;
+      ring.alpha -= 0.013;
+      if (ring.alpha <= 0) { blueRings.splice(i, 1); continue; }
+      drawBlueRing(cx, cy, ring);
+    }
+
+    // Ambient glow behind record
+    const ambGlow = vctx.createRadialGradient(cx, cy, recordR * 0.5, cx, cy, recordR * 1.6);
+    ambGlow.addColorStop(0, `rgba(80,50,160,${0.05 + bassVal * 0.08})`);
+    ambGlow.addColorStop(0.5, `rgba(40,60,180,${0.02 + bassVal * 0.04})`);
+    ambGlow.addColorStop(1, 'rgba(0,0,0,0)');
+    vctx.fillStyle = ambGlow;
+    vctx.beginPath();
+    vctx.arc(cx, cy, recordR * 1.6, 0, Math.PI * 2);
+    vctx.fill();
+
+    // Draw vinyl record
+    drawVinylRecord(cx, cy, recordR, rotation, bassVal, largeShake);
+
+    visRaf = requestAnimationFrame(drawVisFrame);
+  }
+
+  function showAdvancedVis() {
+    const container = document.getElementById('visContainer');
+    if (visActive) return;
+    visActive = true;
+    container.classList.add('active');
+    resizeVisCanvas();
+    vctx.fillStyle = '#050508';
+    vctx.fillRect(0, 0, visCanvas.width, visCanvas.height);
+    if (visRaf) cancelAnimationFrame(visRaf);
+    drawVisFrame();
+  }
+
+  function hideAdvancedVis() {
+    const container = document.getElementById('visContainer');
+    visActive = false;
+    container.classList.remove('active');
+    if (visRaf) { cancelAnimationFrame(visRaf); visRaf = null; }
+  }
+
+  scanLocalMusic();
+  document.getElementById('localPlayer').style.display = 'none';
+  switchMusicTab('local');
+  // Auto-play bgm and show visualizer
+  setTimeout(() => {
+    playLocalSong(0);
+    showAdvancedVis();
+  }, 300);
 </script>
 </body>
 </html>
