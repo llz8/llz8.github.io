@@ -260,10 +260,15 @@
   .subpage-header p { font-size: 1.05rem; color: var(--text-secondary); line-height: 1.8; }
   .subpage-content { animation: fadeInUp 0.6s ease 0.15s both; }
 
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+   @keyframes fadeInUp {
+     from { opacity: 0; transform: translateY(24px); }
+     to { opacity: 1; transform: translateY(0); }
+   }
+
+   @keyframes spin {
+     from { transform: rotate(0deg); }
+     to { transform: rotate(360deg); }
+   }
 
   /* ===== Personal ===== */
   .profile-section {
@@ -365,6 +370,8 @@
   .project-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.3rem; color: #c4b5fd; }
   .project-meta { font-size: 0.78rem; color: rgba(255,255,255,0.3); margin-bottom: 0.4rem; }
   .project-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+  .project-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.5rem; }
+  .project-tags .tag { font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; background: rgba(108,92,231,0.15); color: #a78bfa; border: 1px solid rgba(108,92,231,0.2); }
 
   .add-btn {
     padding: 7px 18px;
@@ -1164,6 +1171,130 @@
     .cal-day .lunar { display: none; }
     .music-controls-panel { padding: 8px; }
   }
+
+  /* ===== World Switcher ===== */
+  .world-switcher {
+    position: fixed;
+    left: 50%;
+    bottom: 15%;
+    transform: translateX(-50%);
+    z-index: 600;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .world-switcher:active { cursor: grabbing; }
+  .world-tooltip {
+    position: fixed;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.7);
+    background: rgba(10, 6, 20, 0.9);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 601;
+    opacity: 0;
+    transition: opacity 0.15s;
+    backdrop-filter: blur(8px);
+  }
+  .world-switcher img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.15);
+    box-shadow: 0 0 20px rgba(108,92,231,0.4);
+    transition: box-shadow 0.3s, transform 0.3s;
+    object-fit: cover;
+    object-position: center;
+  }
+  .world-switcher:hover img {
+    box-shadow: 0 0 30px rgba(108,92,231,0.7);
+    transform: scale(1.1);
+  }
+  .world-switcher.dragging { cursor: grabbing; }
+
+  .world-mask {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 500;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .world-mask.active { pointer-events: all; }
+  .world-mask .mask-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: #0a0a1a;
+    transform: scale(0);
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .world-mask.active .mask-circle { transform: scale(1); }
+  .world-mask .inner-page {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    opacity: 0;
+    transition: opacity 0.3s 0.5s;
+  }
+  .world-mask.active .inner-page { opacity: 1; }
+  .world-mask.exit .inner-page { opacity: 0; transition: opacity 0.3s; }
+
+
+  .world-switcher.outer img { border-color: rgba(255,200,100,0.3); box-shadow: 0 0 20px rgba(255,200,100,0.3); }
+  .world-switcher.outer:hover img { box-shadow: 0 0 30px rgba(255,200,100,0.5); }
+
+  /* ---- QR 码入口 ---- */
+  .qr-trigger {
+    position: fixed;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 600;
+    cursor: pointer;
+  }
+  .qr-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 10px rgba(34,197,94,0.5);
+    transition: box-shadow 0.3s;
+  }
+  .qr-trigger:hover .qr-dot {
+    box-shadow: 0 0 20px rgba(34,197,94,0.8);
+  }
+  .qr-popup {
+    position: fixed;
+    left: 40px;
+    top: 50%;
+    transform: translateY(-50%) translateX(-8px);
+    z-index: 599;
+    display: flex;
+    gap: 16px;
+    padding: 14px;
+    background: rgba(16,16,36,0.95);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    backdrop-filter: blur(16px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s 0.1s, transform 0.15s 0.1s;
+  }
+  .qr-trigger:hover + .qr-popup,
+  .qr-popup:hover {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) translateX(0);
+    transition: opacity 0.15s 0s, transform 0.15s 0s;
+  }
+  .qr-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .qr-item img { width: 160px; height: 240px; object-fit: cover; border-radius: 8px; display: block; }
+  .qr-item span { font-size: 0.75rem; color: rgba(255,255,255,0.6); text-align: center; }
 </style>
 </head>
 <body>
@@ -1257,6 +1388,16 @@
   <div class="toolbar-grid" id="toolbarGrid"></div>
 </div>
 
+<!-- ===== World Switcher ===== -->
+<div class="world-switcher" id="worldSwitcher">
+  <img id="worldIcon" src="assets/images/baseImg/里.png" alt="里世界">
+</div>
+<div class="world-tooltip" id="worldTooltip">里世界</div>
+<div class="world-mask" id="worldMask">
+  <div class="mask-circle" id="maskCircle"></div>
+  <iframe class="inner-page" id="innerPage" src="inner.html"></iframe>
+</div>
+
   <button class="back-btn" id="toolbarBackBtn" onclick="navigateTo('home')">←</button>
 
 <!-- ===== Top-Right Widgets ===== -->
@@ -1332,8 +1473,79 @@
 
 </div>
 
+<!-- ===== QR Code Entry ===== -->
+<div class="qr-trigger" id="qrTrigger">
+  <div class="qr-dot"></div>
+</div>
+<div class="qr-popup" id="qrPopup">
+  <div class="qr-item">
+    <img src="assets/images/baseImg/好友码.jpg" alt="好友码">
+    <span>好友码</span>
+  </div>
+  <div class="qr-item">
+    <img src="assets/images/baseImg/捐助码.png" alt="捐助码">
+    <span>捐助码</span>
+  </div>
+</div>
+
 <script src="config/tools.js"></script>
 <script>
+  // ===== Agnes AI API Config =====
+  const AGNES_API_KEY = 'sk-ohsFlerOfQ8PrXAdp1QxKjkWuxfZwxuXAU95TC4E0AdgibTq';
+  const AGNES_API_BASE = 'https://api.agnes-ai.com';
+
+  async function agnesGenerateImage(prompt, size = '1024x1024') {
+    const res = await fetch(AGNES_API_BASE + '/v1/images/generations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + AGNES_API_KEY },
+      body: JSON.stringify({ model: 'agnes-image-v1', prompt: prompt, n: 1, size: size })
+    });
+    if (!res.ok) throw new Error('图片生成失败: ' + res.status + ' ' + res.statusText);
+    const data = await res.json();
+    return data.data[0].url || data.data[0].b64_json;
+  }
+
+  async function agnesGenerateVideo(prompt, duration = 5, resolution = '720p', fps = 24) {
+    const res = await fetch(AGNES_API_BASE + '/v1/videos/generations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + AGNES_API_KEY },
+      body: JSON.stringify({
+        model: 'agnes-video-v1',
+        prompt: prompt,
+        duration: duration,
+        resolution: resolution,
+        fps: fps
+      })
+    });
+    if (!res.ok) throw new Error('视频生成失败: ' + res.status + ' ' + res.statusText);
+    const data = await res.json();
+    return data.data[0].url || data.url;
+  }
+
+  function addGeneratedItem(type, src) {
+    const container = document.getElementById('aigcWorks');
+    if (!container) return;
+    const heights = [160, 200, 240, 280];
+    const h = heights[Math.floor(Math.random() * heights.length)];
+    const item = document.createElement('div');
+    item.className = 'masonry-item';
+    item.style.height = h + 'px';
+    item.style.animation = 'fadeInUp 0.5s ease';
+    if (type === 'image') {
+      item.style.background = 'rgba(168,85,247,0.05)';
+      item.style.overflow = 'hidden';
+      item.innerHTML = '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;" alt="AI 生成"><div style="position:absolute;bottom:0;left:0;right:0;padding:8px 12px;background:linear-gradient(transparent,rgba(0,0,0,0.7));font-size:0.75rem;color:rgba(255,255,255,0.8)">&#9889; AI 生成</div>';
+      item.style.position = 'relative';
+    } else {
+      item.style.background = 'rgba(6,182,212,0.05)';
+      item.style.overflow = 'hidden';
+      item.innerHTML = '<video src="' + src + '" style="width:100%;height:100%;object-fit:cover;" controls playsinline></video><div style="position:absolute;bottom:0;left:0;right:0;padding:8px 12px;background:linear-gradient(transparent,rgba(0,0,0,0.7));font-size:0.75rem;color:rgba(255,255,255,0.8)">&#9889; AI 生成</div>';
+      item.style.position = 'relative';
+    }
+    container.appendChild(item);
+    container.scrollTop = container.scrollHeight;
+  }
+
   // ===== Particle System =====
   const canvas = document.getElementById('particle-canvas');
   const ctx = canvas.getContext('2d');
@@ -1461,7 +1673,10 @@
         <span class="skill-tag">Java</span><span class="skill-tag">Python</span>
         <span class="skill-tag">MySQL</span><span class="skill-tag">Docker</span>
         <span class="skill-tag">Vue</span><span class="skill-tag">Redis</span>
-        <span class="skill-tag">Spring Boot</span><span class="skill-tag">AI</span>
+        <span class="skill-tag">Spring Boot</span><span class="skill-tag">vibe coding</span><span class="skill-tag">mq</span>
+      </div>
+      <div class="skill-tags" style="margin-top:0.6rem">
+        <span class="skill-tag">PS</span><span class="skill-tag">剪映</span>
       </div>
     </div>
   </div>
@@ -1472,9 +1687,12 @@
       <button class="add-btn" onclick="addProject()">＋ 添加项目</button>
     </div>
     <div class="projects-scroll" id="projectsContainer">
-      <div class="project-card"><div class="project-title">AI 智能助手平台</div><div class="project-meta">2025.06 - 2026.02</div><div class="project-desc">基于大语言模型构建的智能对话平台，支持多轮对话、知识库检索和插件系统。日活用户超 10 万。</div></div>
-      <div class="project-card"><div class="project-title">开源组件库</div><div class="project-meta">2024.09 - 至今</div><div class="project-desc">一个基于 React 的现代化 UI 组件库，包含 60+ 组件，GitHub 5000+ star，被多个企业项目采用。</div></div>
-      <div class="project-card"><div class="project-title">实时协作白板</div><div class="project-meta">2024.03 - 2024.08</div><div class="project-desc">基于 WebSocket 和 Canvas 的多人实时协作白板应用，支持图形绘制、文字输入和思维导图功能。</div></div>
+      <div class="project-card"><div class="project-title">建信金科理财系统</div><div class="project-meta">2025.4~至今</div><div class="project-tags"><span class="tag">Spring Boot</span><span class="tag">Linux</span><span class="tag">MySQL</span></div><div class="project-desc">建设银行理财系统，包括自营、代销、信托、保险资管、结构性存款等理财产品的认购、申购、赎回、收益发放。保障系统正常运行，分析并帮助解决生产问题。每月迭代版本，分析业务新需求，共同商讨方案并实现，包括开发预约认购功能、中央数据平台文件交互、银联文件交互、双录绑定、客户合约同步、鲁班配置图形化检查工具、批量调度，优化批量处理并发、文件交互、SQL效率等。分析设计并开发信托独立新模块。</div></div>
+      <div class="project-card"><div class="project-title">建信金科理财系统（神州数码）</div><div class="project-meta">2023.4~至今</div><div class="project-desc">换公司到神州数码，未换项目组，继续负责建信金科理财系统的开发与维护。</div></div>
+      <div class="project-card"><div class="project-title">新希望金融科技信贷服务调度系统</div><div class="project-meta">2022.9~2023.4</div><div class="project-tags"><span class="tag">Linux</span><span class="tag">Lua</span></div><div class="project-desc">通过 Lua 语言调度各个模块接口服务，封装贷前阶段全流程。理清信贷业务全流程，撰写脚本，将申请-实名-反诈-征信-评分-授信-签约等每一步分别调用不同系统的后端接口，封装为一个独立的入口，实现可快速调整的业务流程调度。</div></div>
+      <div class="project-card"><div class="project-title">海思供应链系统</div><div class="project-meta">2021.9~2022.09</div><div class="project-tags"><span class="tag">Spring Boot</span><span class="tag">Oracle</span><span class="tag">Vue</span></div><div class="project-desc">海思芯片供应链管理系统，包括计划、订单、制造、工厂、物流等子项目，覆盖供应链全周期。负责制造和订单部分，承接计划部分并为物流提供数据支持，跟踪所有物料制造进度。参与需求分析与详细设计，每月版本迭代上线，设计实现制造与订单新需求，优化原代码设计，处理系统间数据传递与业务文件解析，进行SQL优化及系统运维。</div></div>
+      <div class="project-card"><div class="project-title">新疆医保异地医疗项目</div><div class="project-meta">2020.10~2021.8</div><div class="project-tags"><span class="tag">Spring Cloud Alibaba</span><span class="tag">MySQL</span><span class="tag">Vue</span></div><div class="project-desc">在新疆医保系统下，为跨省就医人群和异地医疗机构提供便捷高效的备案管理、即时结算和资金清分服务，提供监控大屏实时观察各地市医疗机构情况。开发预付金、两定月结算、费用清算等模块及报表、查询、监控大屏等前后端功能，撰写相关文档并参与客户培训。</div></div>
+      <div class="project-card"><div class="project-title">银海问卷调查系统</div><div class="project-meta">2020.7~2020.10</div><div class="project-tags"><span class="tag">Spring Boot</span><span class="tag">MySQL</span><span class="tag">Vue</span></div><div class="project-desc">公司内部问卷调查系统，实现拖动组件生成问卷，在公司内部或客户侧发布并统计结果。整合系统架构、数据库设计与核心功能设计。开发问卷生成、背景图片、问卷发布、权限管理、结果统计等功能及表格和ECharts图表生成。与产品用户沟通，进行需求收集、分析、实现、版本发布与文档整理。</div></div>
     </div>
   </div>
 </div>`,
@@ -1505,18 +1723,30 @@
 </div>
 <div class="subpage-content">
   <div class="aigc-grid" id="aigcGrid">
-    <div class="aigc-card" data-aigc="painting" onclick="openAigcSub('painting')"><h4>🎨 AI 绘画</h4><p>使用 Stable Diffusion、Midjourney 等工具进行 AI 艺术创作，探索视觉生成的边界。</p></div>
+    <div class="aigc-card" data-aigc="painting" onclick="openAigcSub('painting')"><h4>🎨 AI 绘画</h4><p>输入描述词，用 Agnes AI 模型一键生成精美图片</p></div>
     <div class="aigc-card" data-aigc="writing" onclick="openAigcSub('writing')"><h4>📝 AI 写作</h4><p>利用大语言模型辅助内容创作，从文案到故事，让灵感更快落地。</p></div>
     <div class="aigc-card" data-aigc="music" onclick="openAigcSub('music')"><h4>🎵 AI 音乐</h4><p>通过 AI 生成音乐和音效，探索算法与艺术的交汇点。</p></div>
-    <div class="aigc-card" data-aigc="video" onclick="openAigcSub('video')"><h4>🎬 AI 视频</h4><p>使用 AI 视频生成和编辑工具，打造全新的视觉叙事体验。</p></div>
+    <div class="aigc-card" data-aigc="video" onclick="openAigcSub('video')"><h4>🎬 AI 视频</h4><p>输入描述词，用 Agnes AI 模型生成高质量短视频</p></div>
   </div>
   <div class="aigc-subpage" id="aigcSubpage">
     <div class="aigc-sub-header">
       <button class="back-btn" onclick="closeAigcSub()" style="position:relative;top:0;left:0">←</button>
       <h3 id="aigcSubTitle">🎨 AI 绘画</h3>
     </div>
-    <div style="display:flex;gap:0.8rem;margin-bottom:1.2rem;flex-wrap:wrap">
-      <button class="add-btn" onclick="addAigcWork('image')">＋ 添加作品</button>
+    <div id="aigcGenPanel" style="display:none;margin-bottom:1.2rem">
+      <div style="display:flex;gap:0.6rem;margin-bottom:0.8rem;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:1;min-width:200px">
+          <label style="font-size:0.8rem;color:var(--text-secondary);display:block;margin-bottom:4px">描述词</label>
+          <input type="text" id="aigcPromptInput" placeholder="例如：一位美丽的女子在樱花雨中漫步，赛博朋克风格" style="width:100%;padding:10px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:#fff;font-size:0.9rem;outline:none" />
+        </div>
+        <div id="aigcGenButtons" style="display:flex;gap:0.5rem">
+          <button class="add-btn" onclick="generateAndAddImage()" id="genImageBtn">✨ 生成图片</button>
+        </div>
+      </div>
+      <div id="aigcLoading" style="display:none;text-align:center;padding:2rem;color:var(--text-secondary)">
+        <div style="font-size:1.5rem;margin-bottom:0.8rem;animation:spin 1s linear infinite">⏳</div>
+        <p>AI 正在创作中，请稍候...</p>
+      </div>
     </div>
     <div class="album-scroll"><div class="album-masonry" id="aigcWorks"></div></div>
   </div>
@@ -1619,6 +1849,26 @@
     var clickedTitles = { painting: '🎨 我的 AI 绘画作品', writing: '📝 我的 AI 写作作品', music: '🎵 我的 AI 音乐作品', video: '🎬 我的 AI 视频作品' };
     title.textContent = clickedTitles[type] || 'AIGC';
 
+    // Show generation panel only for painting and video
+    var genPanel = document.getElementById('aigcGenPanel');
+    var genButtons = document.getElementById('aigcGenButtons');
+    if (type === 'painting' || type === 'video') {
+      genPanel.style.display = 'block';
+      if (type === 'painting') {
+        title.textContent = '🎨 我的 AI 绘画作品';
+        genButtons.innerHTML = '<button class="add-btn" onclick="generateAndAddImage()" id="genImageBtn">✨ 生成图片</button>';
+        var promptInput = document.getElementById('aigcPromptInput');
+        if (promptInput) promptInput.placeholder = '例如：一位美丽的女子在樱花雨中漫步，赛博朋克风格';
+      } else {
+        title.textContent = '🎬 我的 AI 视频作品';
+        genButtons.innerHTML = '<button class="add-btn" onclick="generateAndAddVideo()" id="genVideoBtn">🎬 生成视频</button>';
+        var promptInput2 = document.getElementById('aigcPromptInput');
+        if (promptInput2) promptInput2.placeholder = '例如：一位女子在海边散步，夕阳西下，海浪拍打着沙滩';
+      }
+    } else {
+      genPanel.style.display = 'none';
+    }
+
     if (pageHeader && pageHeader.classList.contains('subpage-header')) {
       pageHeader.style.transition = 'opacity 0.4s ease';
       pageHeader.style.opacity = '0';
@@ -1655,7 +1905,14 @@
       sub.classList.add('active');
       sub.style.animation = 'fadeInUp 0.5s ease';
       var works = document.getElementById('aigcWorks');
-      if (works) { works.innerHTML = ''; for (var i = 0; i < 4; i++) addAigcWork('image'); }
+      if (works) {
+        works.innerHTML = '';
+        if (type === 'painting' || type === 'video') {
+          // No placeholder for generation pages, user will generate
+        } else {
+          for (var i = 0; i < 4; i++) addAigcWork('image');
+        }
+      }
     }, 600);
   }
 
@@ -1696,6 +1953,64 @@
     item.style.animation = 'fadeInUp 0.4s ease';
     item.innerHTML = '<span class="masonry-emoji">' + emojis[Math.floor(Math.random() * emojis.length)] + '</span><span>作品 #' + (container.children.length + 1) + '</span>';
     container.appendChild(item);
+  }
+
+  // ===== AI 图片生成 =====
+  async function generateAndAddImage() {
+    var promptInput = document.getElementById('aigcPromptInput');
+    var loading = document.getElementById('aigcLoading');
+    var btn = document.getElementById('genImageBtn');
+    if (!promptInput || !loading || !btn) return;
+    var prompt = promptInput.value.trim();
+    if (!prompt) {
+      alert('请输入描述词');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = '⏳ 生成中...';
+    btn.style.opacity = '0.6';
+    loading.style.display = 'block';
+    try {
+      var url = await agnesGenerateImage(prompt);
+      addGeneratedItem('image', url);
+      promptInput.value = '';
+    } catch (e) {
+      alert('生成失败: ' + e.message);
+    } finally {
+      loading.style.display = 'none';
+      btn.disabled = false;
+      btn.textContent = '✨ 生成图片';
+      btn.style.opacity = '1';
+    }
+  }
+
+  // ===== AI 视频生成 =====
+  async function generateAndAddVideo() {
+    var promptInput = document.getElementById('aigcPromptInput');
+    var loading = document.getElementById('aigcLoading');
+    var btn = document.getElementById('genVideoBtn');
+    if (!promptInput || !loading || !btn) return;
+    var prompt = promptInput.value.trim();
+    if (!prompt) {
+      alert('请输入描述词');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = '⏳ 生成中...';
+    btn.style.opacity = '0.6';
+    loading.style.display = 'block';
+    try {
+      var url = await agnesGenerateVideo(prompt);
+      addGeneratedItem('video', url);
+      promptInput.value = '';
+    } catch (e) {
+      alert('生成失败: ' + e.message);
+    } finally {
+      loading.style.display = 'none';
+      btn.disabled = false;
+      btn.textContent = '🎬 生成视频';
+      btn.style.opacity = '1';
+    }
   }
 
   // Card clicks
@@ -2830,6 +3145,151 @@
     playLocalSong(0);
     showAdvancedVis();
   }, 300);
+
+  // ===== World Switcher =====
+  (function() {
+    const switcher = document.getElementById('worldSwitcher');
+    const icon = document.getElementById('worldIcon');
+    const tooltip = document.getElementById('worldTooltip');
+    const mask = document.getElementById('worldMask');
+    const circle = document.getElementById('maskCircle');
+    const img01 = 'assets/images/baseImg/里.png';
+    const img02 = 'assets/images/baseImg/表.png';
+    let isInner = false;
+    let dragging = false;
+    let startX, startY, origLeft, origTop;
+    let lastIconCx = 0, lastIconCy = 0;
+
+    function posTooltip() {
+      const sr = switcher.getBoundingClientRect();
+      tooltip.style.left = (sr.right + 10) + 'px';
+      tooltip.style.top = (sr.top + 6) + 'px';
+      lastIconCx = sr.left + sr.width / 2;
+      lastIconCy = sr.top + sr.height / 2;
+    }
+
+    function showTooltip() { tooltip.style.opacity = '1'; posTooltip(); }
+    function hideTooltip() { tooltip.style.opacity = '0'; }
+
+    function setPos(x, y) {
+      switcher.style.left = x + 'px';
+      switcher.style.top = y + 'px';
+      switcher.style.transform = 'none';
+      lastIconCx = x + 24;
+      lastIconCy = y + 24;
+    }
+
+    switcher.addEventListener('mouseenter', showTooltip);
+    switcher.addEventListener('mouseleave', hideTooltip);
+
+    switcher.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      dragging = false;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = switcher.getBoundingClientRect();
+      origLeft = rect.left;
+      origTop = rect.top;
+      document.getElementById('innerPage').style.pointerEvents = 'none';
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    function onMove(e) {
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        if (!dragging) {
+          setPos(origLeft, origTop);
+          showTooltip();
+        }
+        dragging = true;
+        switcher.classList.add('dragging');
+      }
+      if (dragging) {
+        setPos(origLeft + dx, origTop + dy);
+        posTooltip();
+      }
+    }
+
+    function onUp(e) {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.getElementById('innerPage').style.pointerEvents = '';
+      switcher.classList.remove('dragging');
+      if (!dragging) {
+        toggleWorld(e.clientX, e.clientY);
+      }
+    }
+
+    function toggleWorld(x, y) {
+      if (!isInner) {
+        enterInnerWorld(x, y);
+      } else {
+        exitInnerWorld(x, y);
+      }
+    }
+
+    function enterInnerWorld(cx, cy) {
+      circle.style.transition = 'none';
+      circle.style.transform = '';
+      const maxR = Math.hypot(
+        Math.max(cx, window.innerWidth - cx),
+        Math.max(cy, window.innerHeight - cy)
+      ) * 1.2;
+      circle.style.left = (cx - maxR) + 'px';
+      circle.style.top = (cy - maxR) + 'px';
+      circle.style.width = maxR * 2 + 'px';
+      circle.style.height = maxR * 2 + 'px';
+      circle.offsetHeight;
+      circle.style.transition = '';
+      mask.classList.add('active');
+      switcher.style.zIndex = '700';
+      isInner = true;
+      icon.src = img02;
+      tooltip.textContent = '表世界';
+      switcher.classList.add('outer');
+      document.querySelector('.top-right-widgets').style.display = 'none';
+      document.querySelector('.toolbar').style.display = 'none';
+      document.getElementById('qrTrigger').style.display = 'none';
+      document.getElementById('qrPopup').style.display = 'none';
+    }
+
+    function exitInnerWorld(cx, cy) {
+      const cr = circle.getBoundingClientRect();
+      const oxPct = ((cx - cr.left) / cr.width * 100) + '%';
+      const oyPct = ((cy - cr.top) / cr.height * 100) + '%';
+
+      circle.style.transformOrigin = oxPct + ' ' + oyPct;
+      circle.style.transition = 'none';
+      circle.style.transform = 'scale(1)';
+      void circle.offsetHeight;
+
+      mask.classList.add('exit');
+
+      circle.style.transition = 'transform 0.9s cubic-bezier(0.4, 0, 0.2, 1)';
+      circle.style.transform = 'scale(0)';
+
+      switcher.style.zIndex = '600';
+      isInner = false;
+      icon.src = img01;
+      tooltip.textContent = '里世界';
+      switcher.classList.remove('outer');
+      document.querySelector('.top-right-widgets').style.display = '';
+      document.querySelector('.toolbar').style.display = '';
+      document.getElementById('qrTrigger').style.display = '';
+      document.getElementById('qrPopup').style.display = '';
+
+      setTimeout(function() {
+        mask.classList.remove('active', 'exit');
+        circle.style.transition = '';
+        circle.style.transform = 'scale(0)';
+        circle.style.transformOrigin = '';
+      }, 1000);
+    }
+
+    requestAnimationFrame(posTooltip);
+  })();
 </script>
 </body>
 </html>

@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>里世界 - 题材复盘</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --red: #ff2244;
+      --red-glow: rgba(255, 34, 68, 0.7);
+      --red-deep: #cc1133;
+      --purple: #7c3aed;
+      --bg: #0a0208;
+      --panel-bg: rgba(8, 2, 12, 0.92);
+      --border-red: rgba(255, 30, 60, 0.6);
+    }
+
+    body {
+      background: var(--bg);
+      color: #ddd;
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* === 背景光晕 === */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -10%; left: -5%;
+      width: 50%; height: 60%;
+      background: radial-gradient(ellipse at center, rgba(140, 40, 220, 0.5) 0%, rgba(100, 20, 180, 0.25) 35%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -15%; right: -5%;
+      width: 50%; height: 55%;
+      background: radial-gradient(ellipse at center, rgba(255, 30, 60, 0.3) 0%, rgba(200, 10, 40, 0.1) 35%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* === 外层发光边框 === */
+    .main-frame {
+      position: relative;
+      z-index: 1;
+      margin: 30px 40px;
+      min-height: calc(100vh - 60px);
+      background: rgba(8, 2, 12, 0.75);
+      border: 2px solid var(--border-red);
+      border-radius: 10px;
+      box-shadow:
+        0 0 20px rgba(255, 30, 60, 0.3),
+        0 0 60px rgba(255, 30, 60, 0.1),
+        inset 0 0 80px rgba(255, 30, 60, 0.03),
+        inset 0 0 2px rgba(255, 30, 60, 0.15);
+      padding: 0;
+      overflow: hidden;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* 内层边框 */
+    .main-frame::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border: 1px solid rgba(255, 30, 60, 0.2);
+      border-radius: 8px;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* 顶部红色高光条 */
+    .main-frame::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 10%;
+      width: 80%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--red), transparent);
+      box-shadow: 0 0 20px var(--red-glow), 0 0 40px rgba(255, 30, 60, 0.3);
+      z-index: 3;
+    }
+
+    .frame-glow {
+      position: absolute;
+      inset: -2px;
+      border: 2px solid var(--border-red);
+      border-radius: 10px;
+      box-shadow:
+        0 0 15px var(--red-glow),
+        0 0 40px rgba(255, 30, 60, 0.2),
+        inset 0 0 15px rgba(255, 30, 60, 0.08);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* === 顶部导航 === */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding: 18px 20px 14px;
+      position: relative;
+      z-index: 3;
+    }
+
+    .top-tab {
+      padding: 8px 30px;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.45);
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      letter-spacing: 3px;
+      border: none;
+      background: none;
+      font-family: inherit;
+    }
+    .top-tab:hover { color: rgba(255, 255, 255, 0.75); }
+
+    .top-tab.active {
+      color: #fff;
+      font-size: 1.6rem;
+      font-weight: 900;
+      font-family: 'Orbitron', 'PingFang SC', sans-serif;
+      letter-spacing: 4px;
+      text-shadow:
+        0 0 10px var(--red),
+        0 0 30px var(--red-glow),
+        0 0 60px rgba(255, 30, 60, 0.4);
+      padding: 6px 50px;
+    }
+    .top-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 15%;
+      width: 70%;
+      height: 2px;
+      background: var(--red);
+      box-shadow: 0 0 12px var(--red-glow), 0 0 25px rgba(255, 30, 60, 0.4);
+    }
+
+    .top-divider {
+      width: 1px;
+      height: 18px;
+      background: rgba(255, 255, 255, 0.12);
+      margin: 0 2px;
+    }
+
+    .sub-tabs {
+      display: flex;
+      gap: 10px;
+      padding: 6px 30px 14px;
+      position: relative;
+      z-index: 3;
+    }
+    .sub-tab {
+      padding: 6px 22px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 1px solid rgba(255, 30, 60, 0.25);
+      background: rgba(255, 30, 60, 0.06);
+      color: rgba(255, 255, 255, 0.5);
+      font-family: inherit;
+    }
+    .sub-tab:hover { color: #fff; border-color: rgba(255, 30, 60, 0.4); background: rgba(255, 30, 60, 0.1); }
+    .sub-tab.active {
+      background: rgba(255, 30, 60, 0.25);
+      border-color: var(--red);
+      color: #fff;
+      box-shadow: 0 0 15px rgba(255, 30, 60, 0.25), inset 0 0 15px rgba(255, 30, 60, 0.08);
+      text-shadow: 0 0 8px rgba(255, 30, 60, 0.5);
+    }
+
+    .content {
+      display: none;
+      gap: 16px;
+      padding: 0 24px;
+      min-height: calc(100vh - 180px);
+    }
+    .content.active { display: flex; }
+
+    .tab-page {
+      display: none;
+      gap: 16px;
+      width: 100%;
+    }
+    .tab-page.active { display: flex; }
+
+    .chart-panel {
+      flex: 1.2;
+      background: rgba(5, 1, 10, 0.6);
+      border: 1px solid rgba(255, 30, 60, 0.2);
+      border-radius: 6px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: inset 0 0 30px rgba(255, 30, 60, 0.03);
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.4);
+    }
+    .chart-title {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .chart-legend {
+      display: flex;
+      gap: 12px;
+      font-size: 0.7rem;
+    }
+    .legend-item { display: flex; align-items: center; gap: 4px; }
+    .legend-dot {
+      width: 8px; height: 3px; border-radius: 1px;
+    }
+
+    .kline-area {
+      flex: 1;
+      position: relative;
+      min-height: 300px;
+    }
+    .kline-area canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .volume-area {
+      height: 120px;
+      position: relative;
+    }
+    .volume-area canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .right-panel {
+      flex: 0.8;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .info-card {
+      background: rgba(5, 1, 10, 0.6);
+      border: 1px solid rgba(255, 30, 60, 0.18);
+      border-radius: 6px;
+      padding: 16px;
+      flex: 1;
+      box-shadow: inset 0 0 30px rgba(255, 30, 60, 0.02);
+    }
+    .info-card-title {
+      color: var(--red);
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-shadow: 0 0 10px rgba(255, 30, 60, 0.4);
+    }
+    .info-card-title::before {
+      content: '';
+      width: 3px;
+      height: 14px;
+      background: var(--red);
+      border-radius: 2px;
+      box-shadow: 0 0 8px var(--red-glow);
+    }
+    .info-text {
+      font-size: 0.75rem;
+      line-height: 1.8;
+      color: rgba(255, 180, 180, 0.4);
+    }
+    .info-text p { margin-bottom: 10px; }
+
+    .stats-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .stat-badge {
+      padding: 4px 10px;
+      border-radius: 3px;
+      font-size: 0.65rem;
+      border: 1px solid rgba(255, 30, 60, 0.25);
+      color: rgba(255, 255, 255, 0.5);
+      background: rgba(255, 30, 60, 0.06);
+    }
+    .stat-badge.up { color: #ff4466; border-color: rgba(255, 68, 102, 0.4); background: rgba(255, 30, 60, 0.1); }
+    .stat-badge.down { color: #22cc88; border-color: rgba(34, 204, 136, 0.3); }
+
+    .corner-deco {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-color: var(--red);
+      opacity: 0.6;
+      z-index: 2;
+    }
+    .corner-deco.tl { top: -1px; left: -1px; border-top: 2px solid; border-left: 2px solid; }
+    .corner-deco.tr { top: -1px; right: -1px; border-top: 2px solid; border-right: 2px solid; }
+    .corner-deco.bl { bottom: -1px; left: -1px; border-bottom: 2px solid; border-left: 2px solid; }
+    .corner-deco.br { bottom: -1px; right: -1px; border-bottom: 2px solid; border-right: 2px solid; }
+
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
+    }
+    .scanline {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(255, 30, 60, 0.12), transparent);
+      z-index: 999;
+      pointer-events: none;
+      animation: scanline 6s linear infinite;
+    }
+
+    @keyframes flicker {
+      0%, 92%, 100% { opacity: 1; }
+      93% { opacity: 0.85; }
+      96% { opacity: 0.95; }
+    }
+    .main-frame { animation: flicker 5s infinite; }
+
+    @keyframes borderPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(255, 30, 60, 0.3), 0 0 60px rgba(255, 30, 60, 0.1), inset 0 0 80px rgba(255, 30, 60, 0.03); }
+      50% { box-shadow: 0 0 25px rgba(255, 30, 60, 0.4), 0 0 80px rgba(255, 30, 60, 0.15), inset 0 0 80px rgba(255, 30, 60, 0.05); }
+    }
+    .main-frame { animation: flicker 5s infinite, borderPulse 4s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+  <div class="scanline"></div>
+  <div class="main-frame">
+    <div class="frame-glow"></div>
+
+    <div class="top-bar">
+      <button class="top-tab" data-tab="lianban">连板复盘</button>
+      <div class="top-divider"></div>
+      <button class="top-tab active" data-tab="topic">题材复盘</button>
+      <div class="top-divider"></div>
+      <button class="top-tab" data-tab="fund">资金复盘</button>
+      <div class="top-divider"></div>
+      <button class="top-tab" data-tab="news">消息复盘</button>
+    </div>
+
+    <div class="sub-tabs" id="subTabs">
+      <button class="sub-tab active" data-sub="overview">市场概览</button>
+      <button class="sub-tab" data-sub="sector">板块分析</button>
+      <button class="sub-tab" data-sub="stock">个股图表</button>
+    </div>
+
+    <div class="content" id="contentArea">
+      <!-- 题材复盘 -->
+      <div class="tab-page active" data-page="topic">
+        <div class="chart-panel">
+          <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+          <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+          <div class="chart-header">
+            <span class="chart-title">K 线综合分析图</span>
+            <span style="color:rgba(255,255,255,0.3)">97 只符合入选 / 日线级别 / 2025/03/10</span>
+          </div>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#ff4466"></span>收 5524.19</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#3ecf8e"></span>5547.53</span>
+            <span class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>涨 4.5%</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#6ec6ff"></span>幅 1.45%</span>
+          </div>
+          <div class="kline-area"><canvas id="klineCanvas"></canvas></div>
+          <div class="chart-header" style="margin-top:4px">
+            <span class="chart-title">MACD 指标</span>
+            <span style="color:rgba(255,255,255,0.3)">37 只符合入选</span>
+          </div>
+          <div class="volume-area"><canvas id="volumeCanvas"></canvas></div>
+        </div>
+        <div class="right-panel">
+          <div class="info-card">
+            <div class="info-card-title">数股图鉴</div>
+            <div class="info-text">
+              <p>题材是市场的灵魂，是短线资金合力形成的核心驱动力。在当前复杂的市场环境中，热点轮动加快，资金在不同题材之间快速切换，需要精准把握市场的核心脉络。</p>
+              <p>市场近期表现出来的结构性行情特征明显，资金持续围绕科技主线展开。人工智能、半导体、新能源等板块轮番表现，成为市场最活跃的方向。</p>
+              <p>投资者需要深入理解政策导向和产业趋势，结合技术面分析，才能在瞬息万变的市场中捕捉到真正的投资机会。</p>
+            </div>
+            <div class="stats-row">
+              <span class="stat-badge up">涨停 47</span>
+              <span class="stat-badge up">连板 12</span>
+              <span class="stat-badge down">跌停 8</span>
+              <span class="stat-badge">炸板 15</span>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">板块异动</div>
+            <div class="info-text">
+              <p>今日市场题材呈现多点开花格局。AI 算力板块延续强势，多只个股封板；半导体设备板块受政策利好刺激集体走高；低空经济概念午后异军突起。</p>
+              <p>资金面上，北向资金大幅净流入，两市成交额突破万亿大关，市场做多情绪高涨。</p>
+            </div>
+            <div class="stats-row">
+              <span class="stat-badge up">AI 算力 +5.2%</span>
+              <span class="stat-badge up">半导体 +3.8%</span>
+              <span class="stat-badge">低空经济 +2.1%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 连板复盘 -->
+      <div class="tab-page" data-page="lianban">
+        <div class="chart-panel">
+          <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+          <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+          <div class="chart-header"><span class="chart-title">连板梯队统计</span></div>
+          <div class="kline-area"><canvas id="lianbanCanvas"></canvas></div>
+        </div>
+        <div class="right-panel">
+          <div class="info-card">
+            <div class="info-card-title">连板龙头</div>
+            <div class="info-text">
+              <p>今日连板梯队完整，最高板 7 连板。高位股接力情绪良好，市场赚钱效应显著。</p>
+              <p>龙头股打开高度空间后，带动后排补涨个股集体上攻，短线资金参与热情高涨。</p>
+            </div>
+            <div class="stats-row">
+              <span class="stat-badge up">7板 1只</span>
+              <span class="stat-badge up">5板 3只</span>
+              <span class="stat-badge up">3板 8只</span>
+              <span class="stat-badge">首板 23只</span>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">情绪指标</div>
+            <div class="info-text">
+              <p>涨停封板率 78%，较昨日提升 5 个百分点。炸板率有所下降，市场做多信心增强。</p>
+              <p>连板成功率 65%，处于近期高位水平，超短线操作环境较好。</p>
+            </div>
+            <div class="stats-row">
+              <span class="stat-badge up">封板率 78%</span>
+              <span class="stat-badge up">成功率 65%</span>
+              <span class="stat-badge down">炸板率 22%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 资金复盘 -->
+      <div class="tab-page" data-page="fund">
+        <div class="chart-panel">
+          <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+          <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+          <div class="chart-header"><span class="chart-title">资金流向分析</span></div>
+          <div class="kline-area"><canvas id="fundCanvas"></canvas></div>
+        </div>
+        <div class="right-panel">
+          <div class="info-card">
+            <div class="info-card-title">主力资金</div>
+            <div class="info-text">
+              <p>今日主力资金净流入 186 亿，主要集中在科技、半导体、新能源板块。</p>
+              <p>北向资金全天净买入 82 亿，连续 5 日净流入，外资持续看好 A 股市场。</p>
+            </div>
+            <div class="stats-row">
+              <span class="stat-badge up">主力 +186亿</span>
+              <span class="stat-badge up">北向 +82亿</span>
+              <span class="stat-badge">融资 +45亿</span>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">板块资金</div>
+            <div class="info-text">
+              <p>AI 算力板块获主力资金大幅加仓，净流入超 50 亿。半导体设备、光伏板块紧随其后。</p>
+              <p>房地产、银行板块遭遇资金净流出，市场风格偏向成长。</p>
+            </div>
+            <div class="stats-row">
+              <span class="stat-badge up">AI +52亿</span>
+              <span class="stat-badge up">半导体 +38亿</span>
+              <span class="stat-badge down">地产 -21亿</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 消息复盘 -->
+      <div class="tab-page" data-page="news">
+        <div class="chart-panel">
+          <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+          <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+          <div class="chart-header"><span class="chart-title">消息面梳理</span></div>
+          <div class="info-text" style="padding:16px">
+            <p style="color:var(--red);font-weight:600;margin-bottom:8px">【重磅政策】</p>
+            <p>国务院发布关于促进人工智能产业高质量发展的若干意见，明确加大对 AI 芯片、大模型等领域的支持力度。</p>
+            <p style="color:var(--red);font-weight:600;margin:12px 0 8px">【行业动态】</p>
+            <p>国内某头部半导体企业宣布 7nm 工艺取得突破性进展，国产替代进程加速。多家券商发布研报看好半导体设备板块。</p>
+            <p style="color:var(--red);font-weight:600;margin:12px 0 8px">【外围市场】</p>
+            <p>美股三大指数集体收涨，纳斯达克涨 1.2%。特斯拉涨超 5%，英伟达涨 3.8%，科技股全线走强。</p>
+            <p style="color:var(--red);font-weight:600;margin:12px 0 8px">【机构观点】</p>
+            <p>多家券商认为当前市场处于底部区域，建议投资者积极布局科技成长板块。重点看好 AI 算力、半导体设备、低空经济三大方向。</p>
+          </div>
+        </div>
+        <div class="right-panel">
+          <div class="info-card">
+            <div class="info-card-title">消息热度</div>
+            <div class="info-text">
+              <p>AI 算力相关消息热度最高，占据今日财经头条半数以上。政策利好叠加产业突破，板块关注度持续攀升。</p>
+            </div>
+            <div class="stats-row">
+              <span class="stat-badge up">AI 算力 热</span>
+              <span class="stat-badge up">半导体 热</span>
+              <span class="stat-badge">低空经济 温</span>
+              <span class="stat-badge">新能源 温</span>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">风险提示</div>
+            <div class="info-text">
+              <p>注意高位股回调风险，部分连板个股涨幅过大，存在获利回吐压力。</p>
+              <p>海外加息预期升温，需关注对成长板块的估值压制。</p>
+            </div>
+            <div class="stats-row">
+              <span class="stat-badge down">高位回调</span>
+              <span class="stat-badge down">估值压力</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Draw K-line chart
+    function drawKline() {
+      const canvas = document.getElementById('klineCanvas');
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width * 2;
+      canvas.height = rect.height * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(2, 2);
+      const w = rect.width, h = rect.height;
+
+      // Grid
+      ctx.strokeStyle = 'rgba(255, 34, 68, 0.06)';
+      ctx.lineWidth = 0.5;
+      for (let i = 0; i <= 6; i++) {
+        const y = (h / 6) * i;
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+      for (let i = 0; i <= 8; i++) {
+        const x = (w / 8) * i;
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+
+      // Y axis labels
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.font = '9px sans-serif';
+      const prices = ['31700', '31400', '31100', '30800', '30500', '30200', '29900'];
+      prices.forEach((p, i) => {
+        ctx.fillText(p, 4, (h / 6) * i + 10);
+      });
+
+      // Generate candlestick data
+      const candles = [];
+      let price = 30200;
+      for (let i = 0; i < 50; i++) {
+        const change = (Math.random() - 0.42) * 120;
+        const open = price;
+        const close = price + change;
+        const high = Math.max(open, close) + Math.random() * 60;
+        const low = Math.min(open, close) - Math.random() * 60;
+        candles.push({ open, close, high, low });
+        price = close;
+      }
+
+      const candleW = (w - 40) / candles.length;
+      const priceMin = Math.min(...candles.map(c => c.low)) - 100;
+      const priceMax = Math.max(...candles.map(c => c.high)) + 100;
+      const toY = p => h - 10 - ((p - priceMin) / (priceMax - priceMin)) * (h - 20);
+
+      candles.forEach((c, i) => {
+        const x = 30 + i * candleW;
+        const isUp = c.close >= c.open;
+        const color = isUp ? '#ff4466' : '#3ecf8e';
+
+        // Wick
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x + candleW / 2, toY(c.high));
+        ctx.lineTo(x + candleW / 2, toY(c.low));
+        ctx.stroke();
+
+        // Body
+        const bodyTop = toY(Math.max(c.open, c.close));
+        const bodyBot = toY(Math.min(c.open, c.close));
+        const bodyH = Math.max(bodyBot - bodyTop, 1);
+        ctx.fillStyle = color;
+        ctx.fillRect(x + 1, bodyTop, candleW - 2, bodyH);
+      });
+
+      // MA lines
+      function drawMA(period, color) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        let started = false;
+        candles.forEach((c, i) => {
+          if (i < period - 1) return;
+          const slice = candles.slice(i - period + 1, i + 1);
+          const avg = slice.reduce((s, v) => s + (v.open + v.close) / 2, 0) / period;
+          const x = 30 + i * candleW + candleW / 2;
+          const y = toY(avg);
+          if (!started) { ctx.moveTo(x, y); started = true; }
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+      drawMA(5, 'rgba(255, 200, 50, 0.6)');
+      drawMA(10, 'rgba(100, 200, 255, 0.5)');
+      drawMA(20, 'rgba(180, 100, 255, 0.4)');
+    }
+
+    // Draw volume bars
+    function drawVolume() {
+      const canvas = document.getElementById('volumeCanvas');
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width * 2;
+      canvas.height = rect.height * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(2, 2);
+      const w = rect.width, h = rect.height;
+
+      ctx.strokeStyle = 'rgba(255, 34, 68, 0.06)';
+      ctx.lineWidth = 0.5;
+      for (let i = 0; i <= 4; i++) {
+        const y = (h / 4) * i;
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      const bars = 50;
+      const barW = (w - 40) / bars;
+      for (let i = 0; i < bars; i++) {
+        const x = 30 + i * barW;
+        const bh = Math.random() * (h - 20) * 0.7 + 10;
+        const isUp = Math.random() > 0.4;
+        ctx.fillStyle = isUp ? 'rgba(255, 68, 102, 0.6)' : 'rgba(62, 207, 142, 0.5)';
+        ctx.fillRect(x + 1, h - bh - 5, barW - 2, bh);
+      }
+
+      // MA line on volume
+      ctx.strokeStyle = 'rgba(255, 200, 50, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      let started = false;
+      for (let i = 0; i < bars; i++) {
+        const x = 30 + i * barW + barW / 2;
+        const y = h - Math.random() * h * 0.5 - 20;
+        if (!started) { ctx.moveTo(x, y); started = true; }
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    // X axis labels
+    function drawXLabels() {
+      const kCanvas = document.getElementById('klineCanvas');
+      const ctx = kCanvas.getContext('2d');
+      ctx.save();
+      ctx.scale(2, 2);
+      const w = kCanvas.width / 2;
+      const labels = ['0508', '0512', '0515', '0517', '0520', '0522', '0524', '0527'];
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.font = '9px sans-serif';
+      labels.forEach((l, i) => {
+        ctx.fillText(l, 30 + (w - 40) / labels.length * i, 12);
+      });
+      ctx.restore();
+    }
+
+    drawKline();
+    drawVolume();
+    drawXLabels();
+
+    // ===== Tab Switching =====
+    document.querySelectorAll('.top-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.top-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        const target = this.dataset.tab;
+        document.querySelectorAll('.tab-page').forEach(p => p.classList.toggle('active', p.dataset.page === target));
+        document.querySelector('.content').classList.add('active');
+        // Redraw canvases if needed
+        if (target === 'topic') { drawKline(); drawVolume(); drawXLabels(); }
+        if (target === 'lianban') drawLianban();
+        if (target === 'fund') drawFund();
+      });
+    });
+
+    document.querySelectorAll('.sub-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // ===== Lianban Chart =====
+    function drawLianban() {
+      const canvas = document.getElementById('lianbanCanvas');
+      if (!canvas) return;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width * 2;
+      canvas.height = rect.height * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(2, 2);
+      const w = rect.width, h = rect.height;
+
+      const data = [23, 8, 3, 1];
+      const labels = ['首板', '2连板', '3-5连板', '5连板+'];
+      const colors = ['#ff6688', '#ff4466', '#cc2244', '#991133'];
+      const barW = w / (data.length * 2 + 1);
+      const maxVal = Math.max(...data);
+
+      ctx.strokeStyle = 'rgba(255, 34, 68, 0.06)';
+      for (let i = 0; i <= 4; i++) {
+        const y = (h / 4) * i;
+        ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      data.forEach((v, i) => {
+        const x = 50 + i * (barW * 2);
+        const bh = (v / maxVal) * (h - 60);
+        const grad = ctx.createLinearGradient(x, h - 30 - bh, x, h - 30);
+        grad.addColorStop(0, colors[i]);
+        grad.addColorStop(1, 'rgba(255,34,68,0.2)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.roundRect(x, h - 30 - bh, barW * 1.5, bh, [4, 4, 0, 0]);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(labels[i], x + barW * 0.75, h - 12);
+        ctx.fillStyle = colors[i];
+        ctx.fillText(v + '只', x + barW * 0.75, h - 36 - bh);
+      });
+    }
+
+    // ===== Fund Flow Chart =====
+    function drawFund() {
+      const canvas = document.getElementById('fundCanvas');
+      if (!canvas) return;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width * 2;
+      canvas.height = rect.height * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(2, 2);
+      const w = rect.width, h = rect.height;
+
+      const mid = h / 2;
+      ctx.strokeStyle = 'rgba(255, 34, 68, 0.1)';
+      ctx.beginPath(); ctx.moveTo(40, mid); ctx.lineTo(w, mid); ctx.stroke();
+
+      const bars = 20;
+      const barW = (w - 60) / bars;
+      for (let i = 0; i < bars; i++) {
+        const x = 50 + i * barW;
+        const val = (Math.random() - 0.35) * (h * 0.35);
+        const isPos = val >= 0;
+        ctx.fillStyle = isPos ? 'rgba(255, 68, 102, 0.6)' : 'rgba(62, 207, 142, 0.5)';
+        if (isPos) ctx.fillRect(x, mid - val, barW - 2, val);
+        else ctx.fillRect(x, mid, barW - 2, -val);
+      }
+
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.font = '10px sans-serif';
+      ctx.fillText('流入', 4, mid - 10);
+      ctx.fillText('流出', 4, mid + 16);
+    }
+
+    // Show topic page by default
+    document.querySelector('.content').classList.add('active');
+  </script>
+</body>
+</html>

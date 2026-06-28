@@ -19,6 +19,7 @@ const TOOLS_USUALLY = [
   { name: 'gemini', url: 'https://gemini.google.com/', icon: '😵' },
   { name: '免费看电视', url: 'https://www.jkan.app/', icon: '📺' },
   { name: '海艺comfyui', url: 'https://www.haiyi.art/workflow', icon: '🎀' },
+  { name: '魔搭社区', url: 'https://www.modelscope.cn/models', icon: '🪄' },
   
 ]
 
